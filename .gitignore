@@ -1,0 +1,6 @@
+/.bsp/
+/export/
+/obsolete/
+/clean-up.sh
+/deploy-rtl.sh
+TODO.txt
