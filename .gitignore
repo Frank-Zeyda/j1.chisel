@@ -1,6 +1,12 @@
 /.bsp/
+/dummy/
 /export/
+/generated/
 /obsolete/
+/project/project/
+/project/target/
+/target/
+/test_run_dir/
 /clean-up.sh
 /deploy-rtl.sh
 TODO.txt
