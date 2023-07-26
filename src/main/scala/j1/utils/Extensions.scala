@@ -1,7 +1,23 @@
 package j1.utils
 
+import java.util.Properties
+
+import scala.io.AnsiColor._
+
 object Extensions {
-  /* Extensions to BigInt type */
+  /* Extensions to Short type */
+  implicit class RichShort(val num: Short) {
+    def toHexString = {
+      f"${num.toInt & 0xFFFF}%04X"
+    }
+
+    def toBinString = {
+      val binStr = (num.toInt & 0xFFFF).toBinaryString
+      ("0" * (16 - binStr.length)) + binStr
+    }
+  }
+
+  /* Extensions to BigInt class */
   implicit class RichBigInt(val num: BigInt) {
     // Reinterprets a BigInt in the context of a given (bit)width.
     // The permissible range for self is -2^(width-1) to 2^(width)-1.
@@ -21,15 +37,80 @@ object Extensions {
     }
   }
 
-  /* Extensions to Short type */
-  implicit class RichShort(val num: Short) {
-    def toHexString = {
-      f"${num.toInt & 0xFFFF}%04X"
+  /* Additional methods for type-class Numeric[T] */
+  implicit class MoreNumericOps[T](val num: T)(implicit numeric: Numeric[T]) {
+    def isSInt: Boolean = {
+      import numeric.mkNumericOps
+      num.toLong >= -(1L << 31) && num.toLong < (1L << 31)
     }
 
-    def toBinString = {
-      val binStr = (num.toInt & 0xFFFF).toBinaryString
-      ("0" * (16 - binStr.length)) + binStr
+    def isUInt: Boolean = {
+      import numeric.mkNumericOps
+      num.toLong >= 0 && num.toLong < (1L << 32)
+    }
+  }
+
+  /* Extensions to Properties class */
+  implicit class RichProperties(props: Properties) {
+    /* Parse value of Int property, supporting BIN/OCT/DEC/HEX format. */
+    def getIntProperty(key: String,
+                       default: Int,
+                       min: BigInt = Int.MinValue,
+                       max: BigInt = Int.MaxValue): Int = {
+      var result: Option[Int] = None
+      var strVal = props.getProperty(key)
+      if (strVal != null) {
+        try {
+          result = Some(ParseUtils.parseInt(strVal.trim(), min, max))
+        }
+        catch {
+          case e: NumberFormatException => {
+            // REVIEW: Raise an Output.critical error here?
+            Output.warn(s"Invalid value ${RED}${strVal}${RESET} " +
+              s"for property ${BOLD}${key}${RESET} in configuration.")
+          }
+          case e: OutOfRangeException[Int] @unchecked => {
+            // REVIEW: Raise an Output.critical error here?
+            Output.warn(s"Value ${RED}${strVal}${RESET} " +
+              s"for property ${BOLD}${key}${RESET} in configuration " +
+              s"outside permissible range: [${e.min}..${e.max}].")
+          }
+        }
+      }
+      result match {
+        case Some(value) => value
+        case None => {
+          Output.warn(s"Using default value ${GREEN}${default}${RESET} " +
+            s"for ${BOLD}${key}${RESET} configuration property.")
+          default
+        }
+      }
+    }
+
+    /* Parse value of Boolean property. */
+    def getBooleanProperty(key: String, default: Boolean): Boolean = {
+      var result: Option[Boolean] = None
+      var strVal = props.getProperty(key)
+      if (strVal != null) {
+        try {
+          result = Some(ParseUtils.parseBoolean(strVal.trim()))
+        }
+        catch {
+          case e: NumberFormatException => {
+            // REVIEW: Raise an Output.critical error here?
+            Output.warn(s"Invalid value ${RED}${strVal}${RESET} " +
+              s"for property ${BOLD}${key}${RESET} in configuration.")
+          }
+        }
+      }
+      result match {
+        case Some(value) => value
+        case None => {
+          Output.warn(s"Using default value ${GREEN}${default}${RESET} " +
+            s"for ${BOLD}${key}${RESET} configuration property.")
+          default
+        }
+      }
     }
   }
 }

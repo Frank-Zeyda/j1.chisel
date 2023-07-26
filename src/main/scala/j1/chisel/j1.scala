@@ -1,13 +1,14 @@
 package j1.chisel
 
-import /*j1.chisel.*/utils.Regs
+import j1.chisel.utils.Regs
 
 import chisel3._
 import chisel3.util._
 
-/* We assume a data/io memory space of no more than 65536 words. */
+class j1(implicit cfg: j1Config) extends Module {
+  // Configuration
+  import cfg.{datawidth,dstkDepth,rstkDepth}
 
-class j1(datawidth: Int, val dstkDepth: Int, rstkDepth: Int) extends Module {
   // Interface
   val io = IO(new Bundle {
     val codeaddr = Output(UInt(16.W))

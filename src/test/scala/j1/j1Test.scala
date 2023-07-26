@@ -1,5 +1,6 @@
 package j1.chisel.test
 
+import j1.chisel.j1Config
 import j1.chisel.j1System
 import j1.miniasm.j1Asm
 import j1.miniasm.j1Disasm
@@ -11,11 +12,17 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.io.AnsiColor._
 
 class j1Test extends AnyFlatSpec with ChiselScalatestTester {
-  val MAX_STEPS = 100 // to bail out of simulation if it does not terminate
+  val MAX_STEPS = 100 // to bail out of simulation when non-termating
 
-  behavior of "j1Asm"
+  /* Load configuration from j1.conf properties file. */
+  Console.println(f"------ ${RED}CONFIG${RESET} ------")
+  /* For testing, ensure that we are not Chisel SyncReadMem. */
+  implicit val cfg = j1Config.load("j1.conf").without_bb_tdp
+  cfg.dump()
+
+  behavior of "j1Asm" /* execute sample test case */
   it should "generate programs that execute correctly on the j1 core" in {
-    test(new j1System()).runPeekPoke(dut => new j1PeekPokeTester(dut) {
+    test(new j1System).runPeekPoke(dut => new j1PeekPokeTester(dut) {
       info("See above console output for the execution trace.")
 
       /* First of all clear all data in code memory. */

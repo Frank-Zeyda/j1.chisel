@@ -10,12 +10,10 @@ import chisel3.util._
 import scala.io.AnsiColor._
 
 /* Example system with three connected LEDS. */
-class j1System(datawidth: Int = 16,
-               dstkDepth: Int = 5,
-               rstkDepth: Int = 5,
-               memsize: Int = 8192,
-               /* For testing disable and for Verilog generation enable */
-               use_bb_tdpram: Boolean = false) extends Module {
+class j1System(implicit cfg: j1Config) extends Module {
+  // Configuration
+  import cfg.{datawidth,dstkDepth,rstkDepth,memsize,use_bb_tdp}
+
   // Interface
   val io = IO(new Bundle {
     val led0 = Output(Bool())
@@ -34,9 +32,9 @@ class j1System(datawidth: Int = 16,
   })
 
   // Submodules
-  val j1cpu = Module(new j1(datawidth, dstkDepth, rstkDepth))
+  val j1cpu = Module(new j1)
   val memory: DualPortedRAM = {
-    if (use_bb_tdpram) {
+    if (use_bb_tdp) {
       Module(new BBDualPortedRAM(datawidth, memsize))
     }
     else {
@@ -75,9 +73,9 @@ class j1System(datawidth: Int = 16,
   io.led1 := leds_state(1)
   io.led2 := leds_state(2)
 
-  /********************/
-  /* IO Space Mapping */
-  /********************/
+  /**************/
+  /* IO Mapping */
+  /**************/
 
   /* Buffer j1cup comibatorial outputs to delay device writes. */
   val io_addr = RegNext(next = j1cpu.io.mem_addr, init = 0.U)
@@ -104,16 +102,23 @@ class j1System(datawidth: Int = 16,
 
 object j1SystemGen extends App {
   import j1.utils.Output
+  /* Step 1: Load design configuration from j1.conf */
+  Output.info(f"Loading configuration from '${BOLD}j1.conf${RESET}' " +
+               "properties file ...")
+  /* For generation, ensure that we are using black-box TDP RAM. */
+  implicit val cfg = j1Config.load("j1.conf").with_bb_tdp
+  cfg.dump()
+  /* Step 2: Generate SystemVerilog files for Chisel design */
   Output.info(
     f"Generating Verilog files inside '${BOLD}generated${RESET}' folder ...")
-  ChiselStage.emitSystemVerilogFile(new j1System(16, 5, 5, 4096, true),
+  ChiselStage.emitSystemVerilogFile(new j1System,
     Array("--target-dir", "dummy"),
     Array("--strip-debug-info",
           "--disable-all-randomization",
           "--split-verilog", "-o", "generated"))
-  Output.info(
-    f"Creating memory initialization file for example program" +
-    f" (${RED}ChaserLight3${RESET})")
+  /* Step 3: Create memory initialization file for chaser light */
+  Output.info(f"Creating memory initialization file for example program" +
+              f" (${RED}ChaserLight3${RESET})")
   ChaserLight3.disasm()
   ChaserLight3.writehex("generated/meminit.hex")
   Output.info(
