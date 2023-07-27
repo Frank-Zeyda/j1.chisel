@@ -1,6 +1,9 @@
 package j1.chisel
 
+import j1.utils.Extensions.RichString
 import j1.utils.Extensions.RichProperties
+import j1.utils.FiniteEnum
+import j1.utils.PropValue
 import j1.utils.Output
 
 import java.io.FileInputStream
@@ -9,14 +12,37 @@ import java.util.Properties
 
 import scala.io.AnsiColor._
 
-/* We assume a data/io memory space of no more than 65536 words. */
+/* Enumeration type for bit-shifter setting */
+sealed abstract case class j1Shifter(propValue: String) extends PropValue {
+  override def toString: String = {
+    getClass.getSimpleName.removeSuffix("$")
+  }
+}
+
+/* Enumeration values for bit-shifter setting */
+object j1Shifter {
+  // Do not deploy a bit-shifter (full emulation).
+  object NOSHIFTER  extends j1Shifter("none")
+  // Only supports right shifts by one step.
+  object MINIMAL    extends j1Shifter("minimal")
+  // Supports left and right shifts by one step.
+  object SINGLESTEP extends j1Shifter("singlestep")
+  // Supports 1-4-8 shifts in both directions.
+  object MULTISTEP  extends j1Shifter("multistep")
+  // Full barrel shifter in both directions.
+  object FULLBARREL extends j1Shifter("fullbarrel")
+  // Instantiation of type class Enum[j1Shifter]
+  implicit val `enum` = FiniteEnum(
+    NOSHIFTER, MINIMAL, SINGLESTEP, MULTISTEP, FULLBARREL)
+}
 
 case class j1Config(
   datawidth: Int = 16,
   dstkDepth: Int = 5,
   rstkDepth: Int = 5,
   memsize: Int = 4096,
-  use_bb_tdp: Boolean = false) {
+  use_bb_tdp: Boolean = false,
+  shifter: j1Shifter = j1Shifter.FULLBARREL) {
 
   // REVIEW: The configuration constraints may be a little arbitrary.
   // - e.g., larger values for datawidth may cause RAM synthesis problems
@@ -25,20 +51,23 @@ case class j1Config(
   require(4 to 12 contains rstkDepth) // rstack size: 16..4096 elements
   require(memsize <= 65536)           // memory size: 0..65536 words (128 KB)
 
+  /* Same configuration but with use_bb_tdp enabled. */
   def with_bb_tdp: j1Config = {
     copy(use_bb_tdp = true)
   }
 
+  /* Same configuration but with use_bb_tdp disabled. */
   def without_bb_tdp: j1Config = {
     copy(use_bb_tdp = false)
   }
 
   /* We use reflection to report the values of all fields. */
   def dump(): Unit = {
-    val fields = getClass.getDeclaredFields
     Output.debug(getClass.getSimpleName + " is")
-    fields.foreach { field =>
-      Output.debug("." + field.getName + " == " + field.get(this).toString)
+    val fields = getClass.getDeclaredFields
+    fields.foreach {
+      field =>
+        Output.debug("." + field.getName + " == " + field.get(this).toString)
     }
   }
 
@@ -58,16 +87,18 @@ object j1Config {
   // Default configuration file to be read by load(). */
   val DEFAULT_CONFIG_FILE: String = "j1.conf"
 
+  /* Create j1 configuration instance programmatically. */
   def apply(datawidth: Int,
             dstkDepth: Int,
             rstkDepth: Int,
             memsize: Int,
-            use_bb_tdp: Boolean) = {
-    new j1Config(datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp)
+            use_bb_tdp: Boolean,
+            shifter: j1Shifter) = {
+    new j1Config(datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, shifter)
   }
 
+  /* Load properties from a given configuration file. */
   def load(filename: String = DEFAULT_CONFIG_FILE): j1Config = {
-    /* Load properties from the given configuration file. */
     val props = new Properties
     try {
       props.load(new FileInputStream(filename))
@@ -75,7 +106,7 @@ object j1Config {
     catch {
       case e: FileNotFoundException => {
         Output.critical(
-          f"Failed to load configuration file: '${BLUE}${filename}${RESET}'")
+          f"Configuration file missing: '${BLUE}${filename}${RESET}'")
       }
     }
 
@@ -85,8 +116,10 @@ object j1Config {
     var rstkDepth = props.getIntProperty("j1.rstack.depth", 5, 4, 12)
     var memsize = props.getIntProperty("j1.memory.size", 4096, 0, 65536)
     var use_bb_tdp = props.getBooleanProperty("j1.memory.bbtpd", true)
+    val shifter = props.getEnumProperty[j1Shifter]("j1.cpu.shifter",
+                                                   j1Shifter.FULLBARREL)
 
     /* Create corresponding j1 configuration instance. */
-    j1Config(datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp)
+    j1Config(datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, shifter)
   }
 }

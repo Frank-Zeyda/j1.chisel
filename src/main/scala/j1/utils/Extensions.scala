@@ -4,6 +4,11 @@ import java.util.Properties
 
 import scala.io.AnsiColor._
 
+/* Allows for a generic treatment of enumerations in property files. */
+trait PropValue {
+  val propValue: String
+}
+
 object Extensions {
   /* Extensions to Short type */
   implicit class RichShort(val num: Short) {
@@ -47,6 +52,21 @@ object Extensions {
     def isUInt: Boolean = {
       import numeric.mkNumericOps
       num.toLong >= 0 && num.toLong < (1L << 32)
+    }
+  }
+
+  /* Extensions to String class */
+  implicit class RichString(s: String) {
+    def removePrefix(prefix: String) = {
+      if (s.startsWith(prefix))
+        s.substring(prefix.length, s.length)
+      else s
+    }
+
+    def removeSuffix(suffix: String) = {
+      if (s.endsWith(suffix))
+        s.substring(0, s.length - suffix.length)
+      else s
     }
   }
 
@@ -107,6 +127,34 @@ object Extensions {
         case Some(value) => value
         case None => {
           Output.warn(s"Using default value ${GREEN}${default}${RESET} " +
+            s"for ${BOLD}${key}${RESET} configuration property.")
+          default
+        }
+      }
+    }
+
+    /* Parse value of an enumeration property (FiniteEnum.Enum[T]). */
+    def getEnumProperty[T <: PropValue](key: String, default: T)
+                           (implicit `enum`: FiniteEnum.Enum[T]) = {
+      var result: Option[T] = None
+      var strVal = props.getProperty(key)
+      if (strVal != null) {
+        // preprocess numStr by trimming
+        val propVal = strVal.trim()
+        val values = `enum`.universe // enumeration values
+        result = values.find(_.propValue.equalsIgnoreCase(propVal))
+        if (!result.isDefined) {
+          Output.warn(s"Invalid value ${RED}${propVal}${RESET} " +
+            s"for property ${BOLD}${key}${RESET} in configuration.")
+          Output.warn(s"Permissible values are: [" +
+            values.map("\"" + _.propValue + "\"").mkString(", ") + "]")
+        }
+      }
+      result match {
+        case Some(value) => value
+        case None => {
+          Output.warn(
+            s"Using default value ${GREEN}${default.propValue}${RESET} " +
             s"for ${BOLD}${key}${RESET} configuration property.")
           default
         }

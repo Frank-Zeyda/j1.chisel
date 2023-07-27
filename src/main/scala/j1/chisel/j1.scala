@@ -7,7 +7,7 @@ import chisel3.util._
 
 class j1(implicit cfg: j1Config) extends Module {
   // Configuration
-  import cfg.{datawidth,dstkDepth,rstkDepth}
+  import cfg.{datawidth,dstkDepth,rstkDepth,shifter}
 
   // Interface
   val io = IO(new Bundle {
@@ -65,6 +65,12 @@ class j1(implicit cfg: j1Config) extends Module {
   val func_prot  = (io.insn(6, 4) === 6.U)
   val func_halt  = (io.insn(6, 4) === 7.U)
   val func_exit  = (io.insn(7)    === 1.U)
+
+  /* Helper wire for mutli-step shifter */
+  val multistep = Wire(UInt(4.W))
+
+  /* Only allow shifts by 8/4/1 bits, respectively. */
+  multistep := Mux(st0(3), 8.U, Mux(st0(2), 4.U, Mux(st0(0), 1.U, 0.U)))
 
   /* Memory Connections */
   io.codeaddr := pcN
@@ -154,12 +160,43 @@ class j1(implicit cfg: j1Config) extends Module {
               is ("b1000".U) {
                 st0N := Fill(datawidth, st0.asSInt < st1.asSInt)
               }
-              // TODO: Support several shifter variants (configurable).
               is ("b1001".U) {
-                st0N := st1 >> st0(4, 0)
+                shifter match {
+                  case j1Shifter.NOSHIFTER => {
+                    st0N := st1
+                  }
+                  case j1Shifter.MINIMAL => {
+                    st0N := st1 >> 1
+                  }
+                  case j1Shifter.SINGLESTEP => {
+                    st0N := st1 >> 1
+                  }
+                  case j1Shifter.MULTISTEP => {
+                    st0N := st1 >> multistep
+                  }
+                  case j1Shifter.FULLBARREL => {
+                    st0N := st1 >> st0(log2Ceil(datawidth), 0)
+                  }
+                }
               }
               is ("b1010".U) {
-                st0N := st1 << st0(4, 0)
+                shifter match {
+                  case j1Shifter.NOSHIFTER => {
+                    st0N := st1
+                  }
+                  case j1Shifter.MINIMAL => {
+                    st0N := st1 // emulated with "DUP +" (2 cycles)
+                  }
+                  case j1Shifter.SINGLESTEP => {
+                    st0N := st1 << 1
+                  }
+                  case j1Shifter.MULTISTEP => {
+                    st0N := st1 << multistep
+                  }
+                  case j1Shifter.FULLBARREL => {
+                    st0N := st1 << st0(log2Ceil(datawidth), 0)
+                  }
+                }
               }
               is ("b1011".U) {
                 st0N := rst0
