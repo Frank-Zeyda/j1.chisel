@@ -2,6 +2,7 @@
 /dummy/
 /export/
 /generated/
+/notes
 /obsolete/
 /project/project/
 /project/target/
@@ -10,4 +11,3 @@
 /cat-all-scala.sh
 /clean-up.sh
 /deploy-rtl.sh
-TODO.txt
