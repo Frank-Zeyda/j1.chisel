@@ -7,6 +7,7 @@
 /project/target/
 /target/
 /test_run_dir/
+/cat-all-scala.sh
 /clean-up.sh
 /deploy-rtl.sh
 TODO.txt
