@@ -42,6 +42,7 @@ case class j1Config(
   rstkDepth: Int = 5,
   memsize: Int = 4096,
   use_bb_tdp: Boolean = false,
+  signext: Boolean = false,
   shifter: j1Shifter = j1Shifter.FULLBARREL) {
 
   // REVIEW: The configuration constraints may be a little arbitrary.
@@ -93,8 +94,10 @@ object j1Config {
             rstkDepth: Int,
             memsize: Int,
             use_bb_tdp: Boolean,
+            signext: Boolean,
             shifter: j1Shifter) = {
-    new j1Config(datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, shifter)
+    new j1Config(
+      datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, signext, shifter)
   }
 
   /* Load properties from a given configuration file. */
@@ -116,10 +119,12 @@ object j1Config {
     var rstkDepth = props.getIntProperty("j1.rstack.depth", 5, 4, 12)
     var memsize = props.getIntProperty("j1.memory.size", 4096, 0, 65536)
     var use_bb_tdp = props.getBooleanProperty("j1.memory.bbtpd", true)
+    val signext = props.getBooleanProperty("j1.cpu.signext", false)
     val shifter = props.getEnumProperty[j1Shifter]("j1.cpu.shifter",
                                                    j1Shifter.FULLBARREL)
 
     /* Create corresponding j1 configuration instance. */
-    j1Config(datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, shifter)
+    j1Config(
+      datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, signext, shifter)
   }
 }

@@ -7,7 +7,7 @@ import chisel3.util._
 
 class j1(implicit cfg: j1Config) extends Module {
   // Configuration
-  import cfg.{datawidth,dstkDepth,rstkDepth,shifter}
+  import cfg.{datawidth,dstkDepth,rstkDepth,signext,shifter}
 
   // Interface
   val io = IO(new Bundle {
@@ -110,8 +110,12 @@ class j1(implicit cfg: j1Config) extends Module {
   .otherwise {
     when (io.insn(15)) {
       /* Immediate instruction */
-      /* TODO: Support configuration of sign-extended immediate pushes. */
-      st0N := io.insn(14, 0).pad(datawidth)
+      if (signext) {
+        st0N := io.insn(14, 0).asSInt.pad(datawidth).asUInt
+      }
+      else {
+        st0N := io.insn(14, 0).pad(datawidth)
+      }
     }
     .otherwise {
       st0N := st0 // default case
