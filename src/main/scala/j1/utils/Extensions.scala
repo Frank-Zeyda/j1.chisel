@@ -10,6 +10,13 @@ trait PropValue {
 }
 
 object Extensions {
+  /* Extensions to Boolean type */
+  implicit class RichBoolean(val flag: Boolean) {
+    def ==> (that: Boolean) = {
+      !flag || that
+    }
+  }
+
   /* Extensions to Short type */
   implicit class RichShort(val num: Short) {
     def toHexString = {
