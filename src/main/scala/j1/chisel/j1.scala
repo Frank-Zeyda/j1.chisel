@@ -7,7 +7,25 @@ import chisel3.util._
 
 class j1(implicit cfg: j1Config) extends Module {
   // Configuration
-  import cfg.{datawidth,dstkDepth,rstkDepth,signext,shifter}
+  import cfg.{datawidth}
+  import cfg.{dstkDepth,rstkDepth}
+  import cfg.{signext}
+  import cfg.{protect,protmem}
+  import cfg.{shifter}
+  import cfg.{stackchecks}
+  import cfg.{bank_insn, halt_insn}
+
+  // Status Output
+  object Status {
+    val RUNNING          = "b000".U
+    val ILLEGAL_ACCCES   = "b001".U // (UNUSED -> FUTURE)
+    val DSTACK_UNDERFLOW = "b010".U
+    val DSTACK_OVERFLOW  = "b011".U
+    val RSTACK_UNDERFLOW = "b100".U
+    val RSTACK_OVERFLOW  = "b101".U
+    val WATCHDOG_FAILURE = "b110".U // (UNUSED -> FUTURE)
+    val HALTED           = "b111".U
+  }
 
   // Interface
   val io = IO(new Bundle {
@@ -19,6 +37,7 @@ class j1(implicit cfg: j1Config) extends Module {
     val dout = Output(UInt(datawidth.W))
     val mem_wr = Output(Bool())
     val io_wr = Output(Bool())
+    val status = Output(UInt(3.W))
   })
 
   // Test Probes
@@ -39,8 +58,11 @@ class j1(implicit cfg: j1Config) extends Module {
   val reboot = Regs.Reboot
   val (pc, pcN) = Regs.InitWithWire(0.U(16.W))
   val (st0, st0N) = Regs.InitWithWire(0.U(datawidth.W))
-  val (dsp, dspN) = Regs.InitWithWire(0.U(dstkDepth.W))
-  val (rsp, rspN) = Regs.InitWithWire(0.U(rstkDepth.W))
+  val (dsp, dspN) = Regs.InitWithWire(0.U((dstkDepth + 1).W))
+  val (rsp, rspN) = Regs.InitWithWire(0.U((rstkDepth + 1).W))
+  val (bank, bankN) = Regs.InitWithWire(0.U(4.W))
+  val (prot, protN) = Regs.InitWithWire(false.B)
+  val (halt, haltN) = Regs.InitWithWire(false.B)
 
   // Data Stack: Aux Wires
   val dspI = Wire(SInt(dstkDepth.W))
@@ -52,6 +74,18 @@ class j1(implicit cfg: j1Config) extends Module {
   val rstkD = Wire(UInt(datawidth.W))
   val rstkW = Wire(Bool())
   rspN := rsp + rspI.asUInt
+
+  /* Data Stack: Runtime Checking */
+  /* NOTE: The number of stack elements is (1 << dstkDepth) + 1 */
+  val dstkOverflow  = dspN === ((1 << dstkDepth) + 2).U
+  val dstkUnderflow = dspN.asSInt === (-1).S ||
+                      dspN.asSInt === (-2).S
+
+  /* Return Stack: Runtime Checking */
+  /* NOTE: The number of stack elements is (1 << rstkDepth) */
+  val rstkOverflow  = dspN === ((1 << rstkDepth) + 1).U
+  val rstkUnderflow = rspN.asSInt === (-1).S ||
+                      rspN.asSInt === (-2).S
 
   /* Helper wires for instruction decoding */
   val is_alu = (io.insn(15, 13) === "b011".U)
@@ -66,6 +100,11 @@ class j1(implicit cfg: j1Config) extends Module {
   val func_halt  = (io.insn(6, 4) === 7.U)
   val func_exit  = (io.insn(7)    === 1.U)
 
+  /* Helper wire for lower memory protection */
+  val protect_gate = {
+    if (protect) !(prot && io.mem_addr < protmem.U) else true.B
+  }
+
   /* Helper wire for mutli-step shifter */
   val multistep = Wire(UInt(4.W))
 
@@ -76,8 +115,8 @@ class j1(implicit cfg: j1Config) extends Module {
   io.codeaddr := pcN
   io.mem_addr := st0N
   io.dout := dstack.io.rdData
-  io.mem_wr := !reboot && is_alu && func_write
-  io.io_wr  := !reboot && is_alu && func_iowrt
+  io.mem_wr := !reboot && !halt && is_alu && func_write && protect_gate
+  io.io_wr  := !reboot && !halt && is_alu && func_iowrt
 
   /* Data Stack Connections */
   val st1 = dstack.io.rdData
@@ -101,11 +140,41 @@ class j1(implicit cfg: j1Config) extends Module {
   probe.st0 := st0
   probe.st1 := st1
 
+  /* Assignment of io.status */
+  when (halt) {
+    if (stackchecks) {
+      when (dstkUnderflow) {
+        io.status := Status.DSTACK_UNDERFLOW
+      }
+      .elsewhen (dstkOverflow) {
+        io.status := Status.DSTACK_OVERFLOW
+      }
+      .elsewhen (rstkUnderflow) {
+        io.status := Status.RSTACK_UNDERFLOW
+      }
+      .elsewhen (rstkOverflow) {
+        io.status := Status.RSTACK_OVERFLOW
+      }
+      .otherwise {
+        io.status := Status.HALTED
+      }
+    }
+    else {
+      io.status := Status.HALTED
+    }
+  }
+  .otherwise {
+    io.status := Status.RUNNING
+  }
+
   /* Update of TOS register (st0). */
   when (reboot) {
     /* To save logic resources, we can remove this case since
      * the value of st0 ought be irrelevant when dsp is 0. */
     st0N := 0.U
+  }
+  .elsewhen (halt) {
+    st0N := st0
   }
   .otherwise {
     when (io.insn(15)) {
@@ -233,7 +302,7 @@ class j1(implicit cfg: j1Config) extends Module {
    * instruction separately rather than relying on default cases / values. */
 
   /* Assignment of dspI and dstkW */
-  when (reboot) {
+  when (reboot || halt) {
     dspI := 0.S
     dstkW := false.B
   }
@@ -265,15 +334,17 @@ class j1(implicit cfg: j1Config) extends Module {
         }
         is ("b11".U) {
           /* Alu instruction */
-          dspI := io.insn(1, 0).asSInt.pad(dstkDepth)
-          dstkW := func_T_N
+          when (!(bank_insn.B && func_bank)) {
+            dspI := io.insn(1, 0).asSInt.pad(dstkDepth)
+            dstkW := func_T_N
+          }
         }
       }
     }
   }
 
   /* Assignment of rspI and rstkW */
-  when (reboot) {
+  when (reboot || halt) {
     rspI := 0.S
     rstkW := false.B
   }
@@ -305,8 +376,10 @@ class j1(implicit cfg: j1Config) extends Module {
         }
         is ("b11".U) {
           /* Alu instruction */
-          rspI := io.insn(3, 2).asSInt.pad(rstkDepth)
-          rstkW := func_T_R
+          when (!(bank_insn.B && func_bank)) {
+            rspI := io.insn(3, 2).asSInt.pad(rstkDepth)
+            rstkW := func_T_R
+          }
         }
       }
     }
@@ -339,22 +412,25 @@ class j1(implicit cfg: j1Config) extends Module {
   when (reboot) {
     pcN := 0.U
   }
+  .elsewhen (halt) {
+    pcN := pc
+  }
   .otherwise {
     pcN := pc + 1.U // default behaviour
     switch (io.insn(15, 13)) {
       is ("b000".U) {
         /* Jmp instruction */
-        pcN := io.insn(12, 0)
+        pcN := bank ## io.insn(12, 0)
       }
       is ("b001".U) {
         /* Jpz instruction */
         when (!st0.orR) {
-          pcN := io.insn(12, 0)
+          pcN := bank ## io.insn(12, 0)
         }
       }
       is ("b010".U) {
         /* Call instruction */
-        pcN := io.insn(12, 0)
+        pcN := bank ## io.insn(12, 0)
       }
       is ("b011".U) {
         /* Alu instruction */
@@ -363,5 +439,66 @@ class j1(implicit cfg: j1Config) extends Module {
         }
       }
     }
+  }
+
+  /* Assignment of bankN */
+  if (bank_insn) {
+    when (reboot) {
+      bankN := 0.U
+    }
+    .otherwise {
+      when (is_alu && func_bank) {
+        bankN := io.insn(3, 0)
+      }
+      .otherwise {
+        // automatically clear bank register after one cycle
+        bankN := 0.U
+      }
+    }
+  }
+  else {
+    bankN := 0.U
+  }
+
+  /* Assignment of protN */
+  if (protect) {
+    when (reboot) {
+      protN := false.B
+    }
+    .otherwise {
+      when (is_alu && func_prot) {
+        protN := true.B
+      }
+      .otherwise {
+        protN := prot
+      }
+    }
+  }
+  else {
+    protN := false.B
+  }
+
+  /* Assignment of haltN */
+  if (halt_insn || stackchecks) {
+    when (reboot) {
+      haltN := false.B
+    }
+    .otherwise {
+      haltN := halt
+      if (halt_insn) {
+        when (is_alu && func_halt) {
+          haltN := true.B
+        }
+      }
+      if (stackchecks) {
+        when (dstkUnderflow || dstkOverflow ||
+              rstkUnderflow || rstkOverflow) {
+          haltN := true.B
+        }
+      }
+    }
+  }
+  else {
+    haltN := false.B
   }
 }

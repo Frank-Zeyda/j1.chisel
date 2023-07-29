@@ -37,6 +37,8 @@ object j1Shifter {
     NOSHIFTER, MINIMAL, SINGLESTEP, MULTISTEP, FULLBARREL)
 }
 
+/* TODO: Perhaps add a sub-configuration object for the ISA. */
+
 case class j1Config(
   datawidth: Int = 16,
   dstkDepth: Int = 5,
@@ -44,7 +46,12 @@ case class j1Config(
   memsize: Int = 4096,
   use_bb_tdp: Boolean = false,
   signext: Boolean = false,
-  shifter: j1Shifter = j1Shifter.FULLBARREL) {
+  protect: Boolean,
+  protmem: Int = 0xff,
+  shifter: j1Shifter = j1Shifter.FULLBARREL,
+  stackchecks: Boolean,
+  bank_insn: Boolean,
+  halt_insn: Boolean) {
 
   // REVIEW: The configuration constraints may be a little arbitrary.
   // - e.g., larger values for datawidth may cause RAM synthesis problems
@@ -52,6 +59,7 @@ case class j1Config(
   require(4 to 12 contains dstkDepth) // dstack size: 16..4096 elements
   require(4 to 12 contains rstkDepth) // rstack size: 16..4096 elements
   require(memsize <= 65536)           // memory size: 0..65536 words (128 KB)
+  require(protmem <= 65536)           // lower protected memory size
 
   /* Same configuration but with use_bb_tdp enabled. */
   def with_bb_tdp: j1Config = {
@@ -96,9 +104,25 @@ object j1Config {
             memsize: Int,
             use_bb_tdp: Boolean,
             signext: Boolean,
-            shifter: j1Shifter) = {
-    new j1Config(
-      datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, signext, shifter)
+            protect: Boolean,
+            protmem: Int,
+            shifter: j1Shifter,
+            stackchecks: Boolean,
+            bank_insn: Boolean,
+            halt_insn: Boolean) = {
+    /* Create j1Config instance according to the above. */
+    new j1Config(datawidth,
+                 dstkDepth,
+                 rstkDepth,
+                 memsize,
+                 use_bb_tdp,
+                 signext,
+                 protect,
+                 protmem,
+                 shifter,
+                 stackchecks,
+                 bank_insn,
+                 halt_insn)
   }
 
   /* Load properties from a given configuration file. */
@@ -121,11 +145,16 @@ object j1Config {
     var memsize = props.getIntProperty("j1.memory.size", 4096, 0, 65536)
     var use_bb_tdp = props.getBooleanProperty("j1.memory.bbtpd", true)
     val signext = props.getBooleanProperty("j1.cpu.signext", false)
+    val protect = props.getBooleanProperty("j1.cpu.protect", false)
+    val protmem = props.getIntProperty("j1.cpu.protect", 0xff, 0, 65536)
     val shifter = props.getEnumProperty[j1Shifter]("j1.cpu.shifter",
                                                    j1Shifter.FULLBARREL)
+    val stackchecks = props.getBooleanProperty("j1.cpu.stackchecks", false)
+    val bank_insn = props.getBooleanProperty("j1.cpu.isa.bank", false)
+    val halt_insn = props.getBooleanProperty("j1.cpu.isa.halt", false)
 
     /* Create corresponding j1 configuration instance. */
-    j1Config(
-      datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, signext, shifter)
+    j1Config(datawidth, dstkDepth, rstkDepth, memsize, use_bb_tdp, signext,
+             protect, protmem, shifter, stackchecks, bank_insn, halt_insn)
   }
 }
