@@ -15,7 +15,8 @@ import scala.io.AnsiColor._
 /* Enumeration type for bit-shifter setting */
 sealed abstract case class j1Shifter(propValue: String) extends PropValue {
   override def toString: String = {
-    getClass.getSimpleName.removeSuffix("$")
+    //getClass.getSimpleName.removeSuffix("$")
+    propValue
   }
 }
 
