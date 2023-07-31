@@ -1,5 +1,6 @@
 package j1.chisel.test
 
+import j1.chisel.j1Status
 import j1.chisel.j1System
 import j1.miniasm.MemInterface
 import j1.miniasm.j1Disasm
@@ -27,12 +28,12 @@ class j1PeekPokeTester(dut: j1System) extends PeekPokeTester(dut)
   /* ****************************** */
 
   val memSize: Int = {
-    dut.memory.mem.length.intValue
+    dut.memory.mem.length.toInt
   }
 
   def readMem(addr: Int): Short = {
     require(addr < memSize)
-    peekAt(dut.memory.mem, addr).shortValue
+    peekAt(dut.memory.mem, addr).toShort
   }
 
   def writeMem(addr: Int, value: Short): Short = {
@@ -72,10 +73,11 @@ class j1PeekPokeTester(dut: j1System) extends PeekPokeTester(dut)
   def initProgMem(code: Seq[Int], start: Int = 0) = {
     require(start >= 0)
     var addr = start
-    code.foreach { insn =>
-      require(0x0 to 0xFFFF contains insn)
-      writeMem(addr, insn.toShort)
-      addr = addr + 1
+    code.foreach {
+      insn =>
+        require(0x0 to 0xFFFF contains insn)
+        writeMem(addr, insn.toShort)
+        addr = addr + 1
     }
   }
 
@@ -84,9 +86,9 @@ class j1PeekPokeTester(dut: j1System) extends PeekPokeTester(dut)
   /* ********************* */
 
   def dumpPC() = {
-    val pc = peek(dut.probe.pc).intValue
+    val pc = peek(dut.probe.pc).toInt
     val insn = peekAt(dut.memory.mem, pc)
-    val mnemonic = j1Disasm.decode(insn.shortValue)
+    val mnemonic = j1Disasm.decode(insn.toShort)
     Console.println(f"PC: 0x${pc}%04X [${BLUE}${mnemonic}${RESET}]")
   }
 
@@ -96,12 +98,34 @@ class j1PeekPokeTester(dut: j1System) extends PeekPokeTester(dut)
     Console.println(f"${COLOR}Reboot${RESET}: ${reboot}")
   }
 
+  def dumpStatus() = {
+    val status = peek(dut.probe.status)
+    val statusText =
+    status.toInt match {
+      case 0x0 => f"${GREEN}RUN${RESET}"
+      case 0x1 => f"${RED}ILLEGAL ACCESS${RESET}"
+      case 0x2 => f"${RED}UNDERFLOW${RESET} (${BOLD}DSTACK${RESET})"
+      case 0x3 => f"${RED}OVERFLOW${RESET} (${BOLD}DSTACK${RESET})"
+      case 0x4 => f"${RED}UNDERFLOW${RESET} (${BOLD}RSTACK${RESET})"
+      case 0x5 => f"${RED}OVERFLOW${RESET} (${BOLD}RSTACK${RESET})"
+      case 0x6 => f"${RED}WATCHDOG FAILURE${RESET}"
+      case 0x7 => f"${BLUE}HALT${RESET}"
+      case _ => assert(false, "status signal out of range")
+    }
+    Console.println(f"Status: ${statusText} (0x${status}%X)")
+  }
+
   def dumpStack() = {
-    val dsp = peek(dut.probe.dsp).intValue
+    var dsp = peek(dut.probe.dsp).toInt
     val st0 = peekSigned(dut.probe.st0)
+    /* Correct dsp in case of stack overflow and underflow. */
+    val status = peek(dut.probe.status).toInt
+    if (status == 0x2) { dsp = 0 }
+    if (status == 0x3) { dsp = dut.j1cpu.dstack.mem.length.toInt + 1 }
+    /* Print content of data stack in the Forth style. */
     Console.print(f"Data Stack: <${dsp}>")
     for (idx <- 2 to dsp) {
-      val size = dut.j1cpu.dstack.mem.length.intValue
+      val size = dut.j1cpu.dstack.mem.length.toInt
       val next = peekAtSigned(dut.j1cpu.dstack.mem, idx % size)
       Console.print(f" ${next}")
     }
@@ -112,10 +136,16 @@ class j1PeekPokeTester(dut: j1System) extends PeekPokeTester(dut)
   }
 
   def dumpRStack() = {
-    val rsp = peek(dut.probe.rsp).intValue
+    //val status = peek(dut.probe.status)
+    var rsp = peek(dut.probe.rsp).toInt
+    /* Correct rsp in case of stack overflow and underflow. */
+    val status = peek(dut.probe.status).toInt
+    if (status == 0x4) { rsp = 0 }
+    if (status == 0x5) { rsp = dut.j1cpu.dstack.mem.length.toInt }
+    /* Print content of return stack in the Forth style. */
     Console.print(f"Return Stack: <${rsp}>")
     for (idx <- 1 to rsp) {
-      val size = dut.j1cpu.rstack.mem.length.intValue
+      val size = dut.j1cpu.rstack.mem.length.toInt
       val next = peekAt(dut.j1cpu.rstack.mem, idx % size)
       Console.print(f" $$${next}%04X")
     }
@@ -125,6 +155,7 @@ class j1PeekPokeTester(dut: j1System) extends PeekPokeTester(dut)
   def dumpState() = {
     dumpPC()
     dumpReboot()
+    dumpStatus()
     dumpStack()
     dumpRStack()
   }

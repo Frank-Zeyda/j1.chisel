@@ -1,9 +1,22 @@
 package j1.chisel
 
 import j1.chisel.utils.Regs
+import j1.chisel.utils.Wires._
 
 import chisel3._
 import chisel3.util._
+
+// Values for the status output signal.
+object j1Status {
+  val RUNNING          = "b000".U(3.W)
+  val ILLEGAL_ACCCES   = "b001".U(3.W) // (UNUSED -> FUTURE)
+  val DSTACK_UNDERFLOW = "b010".U(3.W)
+  val DSTACK_OVERFLOW  = "b011".U(3.W)
+  val RSTACK_UNDERFLOW = "b100".U(3.W)
+  val RSTACK_OVERFLOW  = "b101".U(3.W)
+  val WATCHDOG_FAILURE = "b110".U(3.W) // (UNUSED -> FUTURE)
+  val HALTED           = "b111".U(3.W)
+}
 
 class j1(implicit cfg: j1Config) extends Module {
   // Configuration
@@ -13,19 +26,9 @@ class j1(implicit cfg: j1Config) extends Module {
   import cfg.{protect,protmem}
   import cfg.{shifter}
   import cfg.{stackchecks}
+  import cfg.{relbranches}
   import cfg.{bank_insn, halt_insn}
-
-  // Status Output
-  object Status {
-    val RUNNING          = "b000".U
-    val ILLEGAL_ACCCES   = "b001".U // (UNUSED -> FUTURE)
-    val DSTACK_UNDERFLOW = "b010".U
-    val DSTACK_OVERFLOW  = "b011".U
-    val RSTACK_UNDERFLOW = "b100".U
-    val RSTACK_OVERFLOW  = "b101".U
-    val WATCHDOG_FAILURE = "b110".U // (UNUSED -> FUTURE)
-    val HALTED           = "b111".U
-  }
+  import cfg.{swap16_insn, swap32_insn}
 
   // Interface
   val io = IO(new Bundle {
@@ -37,7 +40,7 @@ class j1(implicit cfg: j1Config) extends Module {
     val dout = Output(UInt(datawidth.W))
     val mem_wr = Output(Bool())
     val io_wr = Output(Bool())
-    val status = Output(UInt(3.W))
+    val status = Output(Bits(3.W))
   })
 
   // Test Probes
@@ -48,6 +51,7 @@ class j1(implicit cfg: j1Config) extends Module {
     val rsp = Output(UInt(rstkDepth.W))
     val st0 = Output(UInt(datawidth.W))
     val st1 = Output(UInt(datawidth.W))
+    val status = Output(Bits(3.W))
   })
 
   // Submodules
@@ -65,15 +69,15 @@ class j1(implicit cfg: j1Config) extends Module {
   val (halt, haltN) = Regs.InitWithWire(false.B)
 
   // Data Stack: Aux Wires
-  val dspI = Wire(SInt(dstkDepth.W))
+  val dspI = Wire(SInt(2.W))
   val dstkW = Wire(Bool())
-  dspN := dsp + dspI.asUInt
+  dspN := dsp + dspI.pad(dstkDepth + 1).asUInt
 
   // Return Stack: Aux Wires
-  val rspI = Wire(SInt(dstkDepth.W))
+  val rspI = Wire(SInt(2.W))
   val rstkD = Wire(UInt(datawidth.W))
   val rstkW = Wire(Bool())
-  rspN := rsp + rspI.asUInt
+  rspN := rsp + rspI.pad(rstkDepth + 1).asUInt
 
   /* Data Stack: Runtime Checking */
   /* NOTE: The number of stack elements is (1 << dstkDepth) + 1 */
@@ -83,7 +87,7 @@ class j1(implicit cfg: j1Config) extends Module {
 
   /* Return Stack: Runtime Checking */
   /* NOTE: The number of stack elements is (1 << rstkDepth) */
-  val rstkOverflow  = dspN === ((1 << rstkDepth) + 1).U
+  val rstkOverflow  = rspN === ((1 << rstkDepth) + 1).U
   val rstkUnderflow = rspN.asSInt === (-1).S ||
                       rspN.asSInt === (-2).S
 
@@ -111,6 +115,9 @@ class j1(implicit cfg: j1Config) extends Module {
   /* Only allow shifts by 8/4/1 bits, respectively. */
   multistep := Mux(st0(3), 8.U, Mux(st0(2), 4.U, Mux(st0(0), 1.U, 0.U)))
 
+  /* Helper wire for target address of a relative branch. */
+  val reltarget = pc + io.insn(11, 0).asSInt.pad(16).asUInt
+
   /* Memory Connections */
   io.codeaddr := pcN
   io.mem_addr := st0N
@@ -135,6 +142,7 @@ class j1(implicit cfg: j1Config) extends Module {
   // Connect signal probes for simulation testing
   probe.pc := pc
   probe.reboot := reboot
+  probe.status := io.status
   probe.dsp := dsp
   probe.rsp := rsp
   probe.st0 := st0
@@ -144,30 +152,30 @@ class j1(implicit cfg: j1Config) extends Module {
   when (halt) {
     if (stackchecks) {
       when (dstkUnderflow) {
-        io.status := Status.DSTACK_UNDERFLOW
+        io.status := j1Status.DSTACK_UNDERFLOW
       }
       .elsewhen (dstkOverflow) {
-        io.status := Status.DSTACK_OVERFLOW
+        io.status := j1Status.DSTACK_OVERFLOW
       }
       .elsewhen (rstkUnderflow) {
-        io.status := Status.RSTACK_UNDERFLOW
+        io.status := j1Status.RSTACK_UNDERFLOW
       }
       .elsewhen (rstkOverflow) {
-        io.status := Status.RSTACK_OVERFLOW
+        io.status := j1Status.RSTACK_OVERFLOW
       }
       .otherwise {
-        io.status := Status.HALTED
+        io.status := j1Status.HALTED
       }
     }
     else {
-      io.status := Status.HALTED
+      io.status := j1Status.HALTED
     }
   }
   .otherwise {
-    io.status := Status.RUNNING
+    io.status := j1Status.RUNNING
   }
 
-  /* Update of TOS register (st0). */
+  /* Update of TOS register (st0) */
   when (reboot) {
     /* To save logic resources, we can remove this case since
      * the value of st0 ought be irrelevant when dsp is 0. */
@@ -289,8 +297,21 @@ class j1(implicit cfg: j1Config) extends Module {
             }
           }
           .otherwise {
-            /* ISA Extensions */
-            /* TODO: Add extended instruction set (configurable). */
+            switch (io.insn(11, 8)) {
+              /* ISA Extensions */
+              is ("b0000".U) {
+                if (swap16_insn) {
+                  require(datawidth >= 16) // configuration requirement
+                  st0N := st0.ovrride(st0(7, 0) ## st0(15, 8))
+                }
+              }
+              is ("b0001".U) {
+                if (swap32_insn) {
+                  require(datawidth >= 32) // configuration requirement
+                  st0N := st0.ovrride(st0(15, 0) ## st0(31, 16))
+                }
+              }
+            }
           }
         }
       }
@@ -387,7 +408,7 @@ class j1(implicit cfg: j1Config) extends Module {
 
   /* The below, I presume, is equivalent. Check with Martin Schoeberl. */
   /* TODO: So if there is any benefit using this version wrt logic usage. */
-/*
+  /*
   rspI := 0.S
   rstkW := false.B
   switch (io.insn(15, 13)) {
@@ -402,7 +423,7 @@ class j1(implicit cfg: j1Config) extends Module {
       rstkW := func_T_R
     }
   }
-*/
+  */
 
   /* Assignment of rstkD */
   /* NOTE: For Jpz, we have rstkW := false.B, so rstkD is irrelevant. */
@@ -420,17 +441,50 @@ class j1(implicit cfg: j1Config) extends Module {
     switch (io.insn(15, 13)) {
       is ("b000".U) {
         /* Jmp instruction */
-        pcN := bank ## io.insn(12, 0)
+        if (relbranches) {
+          when (io.insn(12)) {
+            pcN := reltarget
+          }
+          .otherwise {
+            pcN := bank ## io.insn(11, 0)
+          }
+        }
+        else {
+          // Note that io.insn(12) overrides the LSB of bank here.
+          pcN := bank(3, 1) ## io.insn(12, 0)
+        }
       }
       is ("b001".U) {
         /* Jpz instruction */
         when (!st0.orR) {
-          pcN := bank ## io.insn(12, 0)
+          if (relbranches) {
+            when (io.insn(12)) {
+              pcN := reltarget
+            }
+            .otherwise {
+              pcN := bank ## io.insn(11, 0)
+            }
+          }
+          else {
+            // Note that io.insn(12) overrides the LSB of bank here.
+            pcN := bank(3, 1) ## io.insn(12, 0)
+          }
         }
       }
       is ("b010".U) {
         /* Call instruction */
-        pcN := bank ## io.insn(12, 0)
+        if (relbranches) {
+          when (io.insn(12)) {
+            pcN := reltarget
+          }
+          .otherwise {
+            pcN := bank ## io.insn(11, 0)
+          }
+        }
+        else {
+          // Note that io.insn(12) overrides the LSB of bank here.
+          pcN := bank(3, 1) ## io.insn(12, 0)
+        }
       }
       is ("b011".U) {
         /* Alu instruction */

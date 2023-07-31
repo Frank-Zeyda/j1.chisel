@@ -79,13 +79,28 @@ object Extensions {
 
   /* Extensions to Properties class */
   implicit class RichProperties(props: Properties) {
+    /* Note that pruneComments() can handle nested comments too. */
+    private def pruneComments(value: String) = {
+      var result = value
+      /* Remove enclosing (multi-line) comments */
+      val ENCLOSING_COMMENT = raw"/\*(?!/\*)(.)*?\*/"
+      var tmp = result.replaceAll(ENCLOSING_COMMENT, "")
+      /* We need several iterations to remove nested comments. */
+      while (!tmp.equals(result)) {
+        result = tmp
+        tmp = result.replaceAll(ENCLOSING_COMMENT, "")
+      }
+      /* Remove single-line comment at end-of-line. */
+      result.split("//", 2)(0)
+    }
+
     /* Parse value of Int property, supporting BIN/OCT/DEC/HEX format. */
     def getIntProperty(key: String,
                        default: Int,
                        min: BigInt = Int.MinValue,
                        max: BigInt = Int.MaxValue): Int = {
       var result: Option[Int] = None
-      var strVal = props.getProperty(key)
+      var strVal = pruneComments(props.getProperty(key))
       if (strVal != null) {
         try {
           result = Some(ParseUtils.parseInt(strVal.trim(), min, max))
@@ -117,7 +132,7 @@ object Extensions {
     /* Parse value of Boolean property. */
     def getBooleanProperty(key: String, default: Boolean): Boolean = {
       var result: Option[Boolean] = None
-      var strVal = props.getProperty(key)
+      var strVal = pruneComments(props.getProperty(key))
       if (strVal != null) {
         try {
           result = Some(ParseUtils.parseBoolean(strVal.trim()))
@@ -144,7 +159,7 @@ object Extensions {
     def getEnumProperty[T <: PropValue](key: String, default: T)
                            (implicit `enum`: FiniteEnum.Enum[T]) = {
       var result: Option[T] = None
-      var strVal = props.getProperty(key)
+      var strVal = pruneComments(props.getProperty(key))
       if (strVal != null) {
         // preprocess numStr by trimming
         val propVal = strVal.trim()

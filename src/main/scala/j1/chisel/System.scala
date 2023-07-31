@@ -10,7 +10,8 @@ import chisel3.util._
 import scala.io.AnsiColor._
 
 /* Example system with three connected LEDS. */
-class j1System(implicit cfg: j1Config) extends Module {
+class j1System(clk_freq: Int = 50000000)(implicit cfg: j1Config)
+  extends Module {
   // Configuration
   import cfg.{datawidth,dstkDepth,rstkDepth,memsize,use_bb_tdp}
 
@@ -29,6 +30,7 @@ class j1System(implicit cfg: j1Config) extends Module {
     val rsp = Output(UInt(rstkDepth.W))
     val st0 = Output(UInt(datawidth.W))
     val st1 = Output(UInt(datawidth.W))
+    val status = Output(Bits(3.W))
   })
 
   // Submodules
@@ -60,18 +62,37 @@ class j1System(implicit cfg: j1Config) extends Module {
   // Connections: Test Probes
   probe.pc := j1cpu.probe.pc
   probe.reboot := j1cpu.probe.reboot
+  probe.status := j1cpu.probe.status
   probe.dsp := j1cpu.probe.dsp
   probe.rsp := j1cpu.probe.rsp
   probe.st0 := j1cpu.probe.st0
   probe.st1 := j1cpu.probe.st1
 
+  // Status Flashing
+  val status_flash = RegInit(false.B)
+
+  /* Create a counter for flashing of the status LEDs. */
+  val (_, counterWrap) = Counter(true.B, clk_freq / 4)
+
+  // Toggle status_flashing register periodically.
+  when (counterWrap) {
+    status_flash := ~status_flash
+  }
+
   // LEDS Device Interface
   val leds_state = RegInit(7.U(3.W))
 
   // External Connections
-  io.led0 := leds_state(0)
-  io.led1 := leds_state(1)
-  io.led2 := leds_state(2)
+  when (j1cpu.io.status === j1Status.RUNNING) {
+    io.led0 := leds_state(0)
+    io.led1 := leds_state(1)
+    io.led2 := leds_state(2)
+  }
+  .otherwise {
+    io.led0 := j1cpu.io.status(0) && status_flash
+    io.led1 := j1cpu.io.status(1) && status_flash
+    io.led2 := j1cpu.io.status(2) && status_flash
+  }
 
   /**************/
   /* IO Mapping */
@@ -102,13 +123,15 @@ class j1System(implicit cfg: j1Config) extends Module {
 
 object j1SystemGen extends App {
   import j1.utils.Output
-  /* Step 1: Load design configuration from j1.conf */
+
+  /* Step 1: Load design configuration from j1.conf properties file. */
   Output.info(f"Loading configuration from '${BOLD}j1.conf${RESET}' " +
                "properties file ...")
   /* For generation, ensure that we are using black-box TDP RAM. */
   implicit val cfg = j1Config.load("j1.conf").with_bb_tdp
   cfg.dump()
-  /* Step 2: Generate SystemVerilog files for Chisel design */
+
+  /* Step 2: Generate SystemVerilog files for the Chisel design. */
   Output.info(
     f"Generating Verilog files inside '${BOLD}generated${RESET}' folder ...")
   ChiselStage.emitSystemVerilogFile(new j1System,
@@ -116,7 +139,8 @@ object j1SystemGen extends App {
     Array("--strip-debug-info",
           "--disable-all-randomization",
           "--split-verilog", "-o", "generated"))
-  /* Step 3: Create memory initialization file for chaser light */
+
+  /* Step 3: Create memory initialization file for chaser light program. */
   Output.info(f"Creating memory initialization file for example program" +
               f" (${RED}ChaserLight3${RESET})")
   ChaserLight3.disasm()
