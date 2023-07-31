@@ -106,7 +106,7 @@ class j1(implicit cfg: j1Config) extends Module {
 
   /* Helper wire for lower memory protection */
   val protect_gate = {
-    if (protect) !(prot && io.mem_addr < protmem.U) else true.B
+    if (protect) !(prot && io.mem_addr <= protmem.U) else true.B
   }
 
   /* Helper wire for mutli-step shifter */
