@@ -5,7 +5,7 @@ import j1.miniasm.Validation._
 import j1.utils.Output
 import j1.utils.Extensions.RichShort
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ListBuffer}
 import scala.collection.mutable.{Map, HashMap}
 
 import scala.io.AnsiColor._
@@ -15,7 +15,7 @@ import java.io.PrintWriter
 class j1Asm(start: Int = 0) extends MemInterface {
   require(isValidAddr(start))
 
-  // Maximum amount of usable memory (only 16 KB available for code).
+  // Maximum amount of usable memory (codespace depends on j1Config).
   val MEMSIZE_MAX = 65536 // 128 KB (REVIEW)
 
   // Hash table to record labels during compilation.
@@ -24,7 +24,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
   // Memory regions written to during compilation.
   private val regions: ListBuffer[Range] = ListBuffer[Range]()
 
-  // Internal memory to compile programs and data to.
+  // Internal memory array to compile programs and data to.
   private val memory: Array[Short] = new Array[Short](MEMSIZE_MAX)
 
   // Start of the current compilation segment.
@@ -46,10 +46,10 @@ class j1Asm(start: Int = 0) extends MemInterface {
     memory(addr)
   }
 
-  def writeMem(addr: Int, value: Short): Short = {
+  def writeMem(addr: Int, content: Short): Short = {
     require(addr < memSize)
     val prevContent = readMem(addr)
-    memory(addr) = value
+    memory(addr) = content
     prevContent
   }
 
@@ -57,11 +57,15 @@ class j1Asm(start: Int = 0) extends MemInterface {
   /* Private API */
   /* *********** */
 
-  // Fetches a label with a given name from the labels table.
-  // Creates an entry and instance if the label does not exist.
-  private def getLabel(name: String): Label = {
+  // Fetches a label with a given name from the label table.
+  // Creates a table entry and instance if the label does not exist.
+  private def fetchLabel(name: String): Label = {
     labels.getOrElseUpdate(name, new Label(name)(this))
   }
+
+  /* ******************* */
+  /* REWORKED UNTIL HERE */
+  /* ******************* */
 
   /* Checks if a given address is used by another region. */
   private def usedByRegion(addr: Int): Boolean = {
@@ -298,7 +302,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
   }
 
   def label(name: String) = {
-    getLabel(name).locate(cAddr)
+    fetchLabel(name).locate(cAddr)
   }
 
   def imm(value: Int) = {
@@ -329,7 +333,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
 
   def jmp(name: String) = {
     compile(InsnMask.JMP | 0x0000)
-    getLabel(name).calledFrom(cAddr - 1) // REVIEW
+    fetchLabel(name).calledFrom(cAddr - 1) // REVIEW
   }
 
   def jpz(target: Int) = {
@@ -339,7 +343,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
 
   def jpz(name: String) = {
     compile(InsnMask.JPZ | 0x0000)
-    getLabel(name).calledFrom(cAddr - 1) // REVIEW
+    fetchLabel(name).calledFrom(cAddr - 1) // REVIEW
   }
 
   def call(target: Int) = {
@@ -349,7 +353,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
 
   def call(name: String) = {
     compile(InsnMask.CALL | 0x0000)
-    getLabel(name).calledFrom(cAddr -1) // REVIEW
+    fetchLabel(name).calledFrom(cAddr -1) // REVIEW
   }
 
   /* ********* */

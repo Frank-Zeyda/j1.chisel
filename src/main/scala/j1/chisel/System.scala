@@ -98,7 +98,7 @@ class j1System(clk_freq: Int = 50000000)(implicit cfg: j1Config)
   /* IO Mapping */
   /**************/
 
-  /* Buffer j1cup comibatorial outputs to delay device writes. */
+  /* Buffer j1cpu comibatorial outputs to delay device writes. */
   val io_addr = RegNext(next = j1cpu.io.mem_addr, init = 0.U)
   val io_dout = RegNext(next = j1cpu.io.dout, init = 0.U)
   val io_wr   = RegNext(next = j1cpu.io.io_wr , init = false.B)
