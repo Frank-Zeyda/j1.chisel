@@ -42,13 +42,13 @@ Below is an overview of all files and folders currently located inside the repos
 | ↳ [project/build.properties](project/build.properties) | Further sbt setting: *build properties* |
 | ↳ [project/plugins.sbt](project/plugins.sbt) | Further sbt settings: *plugin options* |
 | [src/...](src/) | All Chisel & Scala source files |
-| ↳ [src/main/scala/j1/chisel/...](src/main/scala/j1/chilsel/) | Chisel sources for the J1 CPU and reference design |
-| &nbsp; ↳ [src/main/scala/j1/chisel/Config.scala](src/main/scala/j1/chilsel/Config.scala) | Encodes J1 CPU configurations and reads them from settings files |
-| &nbsp; ↳ [src/main/scala/j1/chisel/Memory.scala](src/main/scala/j1/chilsel/Memory.scala) | Chisel design for J1 TDP Memory (incl. [black-box](https://www.intel.com/content/www/us/en/docs/programmable/683082/22-3/true-dual-port-synchronous-ram.html) variant) |
-| &nbsp; ↳ [src/main/scala/j1/chisel/Stack.scala](src/main/scala/j1/chilsel/Stack.scala) | Chisel design for J1 data and return stack memories |
-| &nbsp; ↳ [src/main/scala/j1/chisel/System.scala](src/main/scala/j1/chilsel/System.scala) | Chisel reference design for the chaser-light smoke test |
-| &nbsp; ↳ [src/main/scala/j1/chisel/Utils.scala](src/main/scala/j1/chilsel/Utils.scala) | Chisel utilities for **Regs** and **Wires** |
-| &nbsp; ↳ [src/main/scala/j1/chisel/j1.scala](src/main/scala/j1/chilsel/j1.scala) | Chisel design of the J1 CPU product line |
+| ↳ [src/main/scala/j1/chisel/...](src/main/scala/j1/chisel/) | Chisel sources for the J1 CPU and reference design |
+| &nbsp; ↳ [src/main/scala/j1/chisel/Config.scala](src/main/scala/j1/chisel/Config.scala) | Encodes J1 CPU configurations and reads them from settings files |
+| &nbsp; ↳ [src/main/scala/j1/chisel/Memory.scala](src/main/scala/j1/chisel/Memory.scala) | Chisel design for J1 TDP Memory (incl. [black-box](https://www.intel.com/content/www/us/en/docs/programmable/683082/22-3/true-dual-port-synchronous-ram.html) variant) |
+| &nbsp; ↳ [src/main/scala/j1/chisel/Stack.scala](src/main/scala/j1/chisel/Stack.scala) | Chisel design for J1 data and return stack memories |
+| &nbsp; ↳ [src/main/scala/j1/chisel/System.scala](src/main/scala/j1/chisel/System.scala) | Chisel reference design for the chaser-light smoke test |
+| &nbsp; ↳ [src/main/scala/j1/chisel/Utils.scala](src/main/scala/j1/chisel/Utils.scala) | Chisel utilities for **Regs** and **Wires** |
+| &nbsp; ↳ [src/main/scala/j1/chisel/j1.scala](src/main/scala/j1/chisel/j1.scala) | Chisel design of the J1 CPU product line |
 | ↳ [src/main/scala/j1/examples/...](src/main/scala/j1/examples/) | Example programs using the mini-assembler for compilation |
 | &nbsp; ↳ [src/main/scala/j1/examples/ChaserLight3.scala](src/main/scala/j1/examples/ChaserLight3.scala) | 3-LED chaser light program (in two variants) |
 | ↳ [src/main/scala/j1/miniasm/...](src/main/scala/j1/miniasm/) | Sources for the J1 mini-assembler / disassembler |
@@ -600,7 +600,7 @@ We are currently exploring in what other ways `j1PeekPokeTester` could be extend
 
 # Caveats and Limitations
 
-Much of the Chisel design and J1 assembler E-DSL still needs thorough testing. I.e., while [src/main/scala/j1/chisel/j1.scala](src/main/scala/j1/chilsel/j1.scala) is, in essence, feature complete with respect to the described configuration space, various combinations of settings still have to be thoroughly tested to validate, e.g., issues due to cross-feature dependencies. We are in the process of building a [Clafer](https://www.clafer.org/) model for the configuration space, with suitable constraints on instance generation.
+Much of the Chisel design and J1 assembler E-DSL still needs thorough testing. I.e., while [src/main/scala/j1/chisel/j1.scala](src/main/scala/j1/chisel/j1.scala) is, in essence, feature complete with respect to the described configuration space, various combinations of settings still have to be thoroughly tested to validate, e.g., issues due to cross-feature dependencies. We are in the process of building a [Clafer](https://www.clafer.org/) model for the configuration space, with suitable constraints on instance generation.
 
 The J1 mini-assembler currently needs work in terms of taking into account the CPU configuration ([j1.config](j1.config)) and, correspondingly, adjusting code generation and carrying out relevant validation. The author is not entirely happy with the E-DSL syntax (i.e., need for brackets around arguments) and might explore ways to improve and beautify it, while making it more robust too.
 
