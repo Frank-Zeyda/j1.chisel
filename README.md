@@ -91,7 +91,7 @@ The available configuration options are listed with their permissible value rang
 | `j1.cpu.isa.swap16` | `yes`/`no` or `true`/`false` | `no` | Includes a `SWAP16` instruction to swap the lower bytes of the TOS and push the result. |
 | `j1.cpu.isa.swap32` | `yes`/`no` or `true`/`false` | `no` | Includes a `SWAP32` instruction to swap the lower 16-bit words of the TOS and push the result. |
 | `j1.memory.size` | `128`..`65536` | `4096` | Amount of deployed memory for code and data, given in 16 bit words. |
-| `j1.memory.bbtpd` | `yes`/`no` or `true`/`false` | `yes` | Uses a black-box Verilog design for TDP RAM. |
+| `j1.memory.bbtdp` | `yes`/`no` or `true`/`false` | `yes` | Uses a black-box Verilog design for TDP RAM. |
 | `j1.dstack.depth` | `4`..`12` | `5` | Depth of the data stack in bits. |
 | `j1.rstack.depth` | `4`..`12` | `5` | Depth of the return stack in bits. |
 
@@ -113,7 +113,7 @@ A few additional notes on each setting follow:
 - `j1.cpu.isa.swap16` adds a `SWAP16` instruction that swaps the lower two bytes of the TOS and pushes the result on the data stack. Other bits greater than 16 of the TOS value are just copied over.
 - `j1.cpu.isa.swap32` adds a `SWAP32` instruction that swaps the lower two (16 bit) words of the TOS and pushes the result on the data stack. Other bits greater than 32 of the TOS value are just copied over. Note that this option is only available if `j1.cpu.datawidth` is equal than or greater to `32`.
 - `j1.memory.size` Size of the combined code/data memory. Note that the J1 CPU can address at most 65536 memory words (128 KB), i.e., if `j1.cpu.isa.bank` and/or `j1.cpu.relbranches` is/are enabled. Otherwise, the maximum addressable memory is 8192 words (16 KB), as per the original J1 design.
-- `j1.memory.bbtpd` uses a Verilog black-box model for the True Dual-Ported RAM of the reference design. This is desired for synthesis since EDA tools seem to have trouble with synthesizing TDP RAM from Chisel's `SyncReadMem` module. For testing and simulation, however, we want to set this to `no` or `false`.
+- `j1.memory.bbtdp` uses a Verilog black-box model for the True Dual-Ported RAM of the reference design. This is desired for synthesis since EDA tools seem to have trouble with synthesizing TDP RAM from Chisel's `SyncReadMem` module. For testing and simulation, however, we want to set this to `no` or `false`.
 - `j1.dstack.depth` Depth (in bits) of the data stack. The stack size corresponds to (2^`j1.dstack.depth`) + 1 (since the TOS is kept in a separate register by the CPU core).
 - `j1.rstack.depth` Depth (in bits) of the return stack. The stack size corresponds to 2^`j1.rstack.depth`.
 
@@ -132,7 +132,7 @@ j1.cpu.isa.halt: no
 j1.cpu.isa.swap16: no
 j1.cpu.isa.swap32: no
 j1.memory.size: 8192
-j1.memory.bbtpd: yes
+j1.memory.bbtdp: yes
 j1.dstack.depth: 4
 j1.rstack.depth: 4
 ```
@@ -194,7 +194,7 @@ object j1SystemGen extends App {
 }
 ```
 
-Note that for generation, we augment [j1.conf](j1.conf) above to ensure that the `j1.memory.bbtpd` setting is set to `true`.
+Note that for generation, we augment [j1.conf](j1.conf) above to ensure that the `j1.memory.bbtdp` setting is set to `true`.
 
 For compilation and deployment via a given EDA tool, all `*.sv` files output to the local [generated](generated) folder are required, as well as the memory initialization file [meminit.hex](generated/meminit.hex). The latter contains the example program of our 3-LED chaser light smoke test; it is defined in the [ChaserLight3.scala](src/main/scala/j1/examples/ChaserLight3.scala) source.
 
@@ -273,7 +273,7 @@ The reference design monitors the `status` output of the J1 CPU, and if that out
 
 The design relies on a 50 MHz clock, mainly for software time delays in the chaser light smoke test; a lower or higher frequency, e.g., in the range of 10..100 MHz might well work too, provided timing constraints of the synthesis are fulfilled (please ensure that relevant configuration files are created in your EDA tool to check for timing violations).
 
-A subtle point of failure turns out to be inference and synthesis of **True Dual-Ported RAM** (TDP RAM) for the main memory of the design. This synthesis mismatch might occur *without the EDA tool emitting a suitable warning or error message*. Hence, please manually check that TDP RAM was synthesized correctly, and otherwise enable the `j1.memory.bbtpd` configuration to circumvent the issue.
+A subtle point of failure turns out to be inference and synthesis of **True Dual-Ported RAM** (TDP RAM) for the main memory of the design. This synthesis mismatch might occur *without the EDA tool emitting a suitable warning or error message*. Hence, please manually check that TDP RAM was synthesized correctly, and otherwise enable the `j1.memory.bbtdp` configuration to circumvent the issue.
 
 ## Note on I/O Mapping
 
@@ -604,7 +604,7 @@ Much of the Chisel design and J1 assembler E-DSL still needs thorough testing. I
 
 The J1 mini-assembler currently needs work in terms of taking into account the CPU configuration ([j1.config](j1.config)) and, correspondingly, adjusting code generation and carrying out relevant validation. The author is not entirely happy with the E-DSL syntax (i.e., need for brackets around arguments) and might explore ways to improve and beautify it, while making it more robust too.
 
-When experimenting with deployment of the generated SystemVerilog onto an FPGA target (Cyclone II [EP2C5T144](https://hobbycomponents.com/altera/819-altera-cyclone-ii-es2c5t144-fpga-dev-board) board with with Quartus II [13.0sp1](https://www.intel.com/content/www/us/en/software-kit/711790/intel-quartus-ii-web-edition-design-software-version-13-0sp1-for-linux.html)), problems occurred due to TDP BRAM not being inferred and synthesized correctly. There are some discussions of similar issues [HERE](https://github.com/chipsalliance/chisel/issues/1788) and [HERE](https://stackoverflow.com/questions/54789756/vivado-cant-recognize-the-double-port-ram-while-using-syncreadmem). Our solution is to manually adjusts `j1.memory.bbtpd`, setting this option to `true` for SystemVerilog generation (`sbt run`) and `false` for Treadle-based simulation (`sbt test`).
+When experimenting with deployment of the generated SystemVerilog onto an FPGA target (Cyclone II [EP2C5T144](https://hobbycomponents.com/altera/819-altera-cyclone-ii-es2c5t144-fpga-dev-board) board with with Quartus II [13.0sp1](https://www.intel.com/content/www/us/en/software-kit/711790/intel-quartus-ii-web-edition-design-software-version-13-0sp1-for-linux.html)), problems occurred due to TDP BRAM not being inferred and synthesized correctly. There are some discussions of similar issues [HERE](https://github.com/chipsalliance/chisel/issues/1788) and [HERE](https://stackoverflow.com/questions/54789756/vivado-cant-recognize-the-double-port-ram-while-using-syncreadmem). Our solution is to manually adjusts `j1.memory.bbtdp`, setting this option to `true` for SystemVerilog generation (`sbt run`) and `false` for Treadle-based simulation (`sbt test`).
 
 The J1 mini-assembler is useful and sufficient for writing programs for test cases, but inappropriate for developing realistic applications for the J1. The author already developed a tool-chain (in [Standard ML](https://www.polyml.org/)) for remote J1 Forth development, optimization and testing. This shall be integrated with this project in the near future, to provide a comprehensive development system for the J1.
 

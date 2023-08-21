@@ -98,7 +98,7 @@ class BBDualPortedRAM(val width: Int, val size: Int) extends BlackBox
 
   // Verilog Description
   setInline("BBDualPortedRAM.sv",
-  f"""// Hand-coded black-box module for TPD RAM.
+  f"""// Hand-coded black-box module for TDP RAM.
     |module BBDualPortedRAM (
     |  // Clock
     |  input clock,

@@ -170,7 +170,7 @@ object j1Config {
     var dstkDepth = props.getIntProperty("j1.dstack.depth", 5, 4, 12)
     var rstkDepth = props.getIntProperty("j1.rstack.depth", 5, 4, 12)
     var memsize = props.getIntProperty("j1.memory.size", 4096, 0, 65536)
-    var use_bb_tdp = props.getBooleanProperty("j1.memory.bbtpd", true)
+    var use_bb_tdp = props.getBooleanProperty("j1.memory.bbtdp", true)
     val signext = props.getBooleanProperty("j1.cpu.signext", false)
     val protect = props.getBooleanProperty("j1.cpu.protect", false)
     val protmem = props.getIntProperty("j1.cpu.protmem", 0xff, 0x1, 0xffff)
