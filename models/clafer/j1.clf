@@ -1,0 +1,95 @@
+/* *********************************** */
+/* Feature model for the j1.chisel CPU */
+/* *********************************** */
+
+// Symbolic values for memory sizes (mitigates state explosion).
+enum memsize = MEM_1KB
+| MEM_2KB
+| MEM_4KB
+| MEM_8KB
+| MEM_16KB
+| MEM_32KB
+| MEM_64KB
+| MEM_128KB
+
+abstract j1
+  cpu
+    datawidth -> integer
+      [ this >= 4 && this <= 128 ]
+    signext ?
+    protect ?
+    protmem -> integer ?
+    xor shifter
+      none
+      minimal
+      singlestep
+      multistep
+      fullbarrel
+    stackchecks ?
+    relbranches ?
+    isa
+      bank ?
+      halt ?
+      swap16 ?
+        [ datawidth >= 16 ]
+      swap32 ?
+        [ datawidth >= 32 ]
+    [ protect <=> protmem ]
+  memory
+    size -> memsize
+    bbtdp
+  dstack
+    depth -> integer
+  rstack
+    depth -> integer
+  [ cpu.isa.bank => memory.size = MEM_128KB ]
+
+/* ************************************* */
+/* Subclafers for J1 instance generation */
+/* ************************************* */
+
+/* The below generates 172 instances (choose one feature). */
+j1_inst_one : j1
+  [ cpu.datawidth in 4, 8, 16, 32 ]
+  [ cpu.protmem in 127, 255 ]
+  [ memory.size = MEM_16KB ]
+  [ memory.bbtdp ]
+  [ dstack.depth in 4, 5]
+  [ rstack.depth in 4, 5]
+  [ one cpu.signext,
+        cpu.protect,
+        cpu.shifter.minimal,
+        cpu.shifter.singlestep,
+        cpu.shifter.multistep,
+        cpu.shifter.fullbarrel,
+        cpu.stackchecks,
+        cpu.relbranches,
+        cpu.isa.bank,
+        cpu.isa.halt,
+        cpu.isa.swap16,
+        cpu.isa.swap32
+  ]
+
+/* The below generates 732 instances (choose two features). */
+/*
+j1_inst_two : j1
+  [ cpu.datawidth in 4, 8, 16, 32 ]
+  [ cpu.protmem in 127, 255 ]
+  [ memory.size = MEM_16KB ]
+  [ memory.bbtdp ]
+  [ dstack.depth in 4, 5]
+  [ rstack.depth in 4, 5]
+  [ # (cpu.signext,
+       cpu.protect,
+       cpu.shifter.minimal,
+       cpu.shifter.singlestep,
+       cpu.shifter.multistep,
+       cpu.shifter.fullbarrel,
+       cpu.stackchecks,
+       cpu.relbranches,
+       cpu.isa.bank,
+       cpu.isa.halt,
+       cpu.isa.swap16,
+       cpu.isa.swap32) = 2
+  ]
+*/

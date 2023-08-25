@@ -1,0 +1,25 @@
+# ANSI escape sequences for colored terminal output.
+ANSI_RESET   := \033[0m
+ANSI_BOLD    := \033[1m
+ANSI_BLACK   := \033[0;30m
+ANSI_RED     := \033[0;31m
+ANSI_GREEN   := \033[0;32m
+ANSI_YELLOW  := \033[0;33m
+ANSI_BLUE    := \033[0;34m
+ANSI_MAGENTA := \033[0;35m
+ANSI_CYAN    := \033[0;36m
+ANSI_WHITE   := \033[0;37m
+
+# Linux requires the option -e for echo to process ANSI sequences.
+ifeq ($(shell uname), Linux)
+define note
+  @echo -e "$(ANSI_BOLD)$(1)$(ANSI_RESET) ..."
+endef
+endif
+
+# On macOS, echo interprets ANSI escape sequences by default.
+ifeq ($(shell uname), Darwin)
+define note
+  @echo "$(ANSI_BOLD)$(1)$(ANSI_RESET) ..."
+endef
+endif
