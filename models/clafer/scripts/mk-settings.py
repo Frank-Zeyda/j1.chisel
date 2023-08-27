@@ -155,7 +155,7 @@ def parse_inst(filename, lines, concrete, abstract = 'j1'):
   for line in lines:
     if not(matching):
       if re.match(INST_REGEX, line):
-        line = concrete
+        line = abstract
         matching = True
     else:
       if not(line.startswith(INDENT_STR)):
