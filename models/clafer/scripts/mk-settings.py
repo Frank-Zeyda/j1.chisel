@@ -145,7 +145,7 @@ def parse_line(text):
 # instance specification for a given (abstract) clafer type.
 # IMPORTANT: use --addtypes for instance generation via ClaferIG.
 def mk_inst_regex(abstract, concrete):
-  return r'^' + concrete + '\s*:\s*' + abstract + '\s*$'
+  return r'^' + concrete + r'\s*:\s*' + abstract + r'\s*$'
 
 # Parses a j1 instance specification from a j1.clf.<N>.data file.
 def parse_inst(filename, lines, concrete, abstract = 'j1'):
