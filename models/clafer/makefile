@@ -37,5 +37,6 @@ settings:
 clean:
 	$(call note,Removing all instance and settings files)
 	rm -f instances/*.data settings/*.conf
+	rm -rf rtl/*.rtl
 
 .PHONY: default clean instances settings
