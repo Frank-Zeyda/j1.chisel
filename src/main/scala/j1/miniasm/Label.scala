@@ -35,7 +35,7 @@ class Label(val name: String)(implicit memIf: MemInterface) {
   private def resolve(caller: Int, target: Int) = {
     require(isValidAddr(caller))
     require(isValidTarget(target))
-    isBranchInsn(memIf.readMem(caller))
+    require(isBranchInsn(memIf.readMem(caller)))
     val insn_mask = memIf.readMem(caller) & 0xE000
     memIf.writeMem(caller, (insn_mask | target).toShort)
   }
@@ -53,7 +53,7 @@ class Label(val name: String)(implicit memIf: MemInterface) {
   // Record the address of a caller of this label (branch instruction).
   def calledFrom(source: Int) = {
     require(isValidAddr(source))
-    isBranchInsn(memIf.readMem(source))
+    require(isBranchInsn(memIf.readMem(source)))
     callers.add(source)
     // Set branch address immediately if the label is already located.
     if (location.isDefined) {

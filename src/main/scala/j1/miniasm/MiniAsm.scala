@@ -149,7 +149,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
         }
       }
       else {
-        Output.warn(f"Cannot augment a non-ALU instruction 0x${lastInsn}04X.")
+        Output.warn(f"Cannot augment a non-ALU instruction 0x${lastInsn}%04X.")
       }
     }
     else {
@@ -214,7 +214,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
     require(0 until MEMSIZE_MAX contains region.start)
     require(0 until MEMSIZE_MAX contains region.last)
     if (region.isEmpty) {
-      Output.warn("Writing empty memory region to '${filename}'.")
+      Output.warn(s"Writing empty memory region to '${filename}'.")
     }
     new PrintWriter(filename) {
       region.foreach {
@@ -236,7 +236,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
     require(0 until MEMSIZE_MAX contains region.start)
     require(0 until MEMSIZE_MAX contains region.last)
     if (region.isEmpty) {
-      Output.warn("Writing empty memory region to '${filename}'.")
+      Output.warn(s"Writing empty memory region to '${filename}'.")
     }
     new PrintWriter(filename) {
       region.foreach {
@@ -545,7 +545,7 @@ object j1Disasm {
         case InsnMask.ALU => {
           aluLookup.get(codeword) match {
             case Some(alu) => mkAluName(alu)
-            case None      => f"<${RED}0x${codeword}04X${RESET}>"
+            case None      => f"<${RED}0x${codeword}%04X${RESET}>"
           }
         }
       }

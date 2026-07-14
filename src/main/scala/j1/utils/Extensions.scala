@@ -115,8 +115,9 @@ object Extensions {
                        min: BigInt = Int.MinValue,
                        max: BigInt = Int.MaxValue): Int = {
       var result: Option[Int] = None
-      var strVal = pruneComments(props.getProperty(key))
+      var strVal = props.getProperty(key)
       if (strVal != null) {
+        strVal = pruneComments(strVal)
         try {
           result = Some(ParseUtils.parseInt(strVal.trim(), min, max))
         }
@@ -147,8 +148,9 @@ object Extensions {
     /* Parse value of Boolean property. */
     def getBooleanProperty(key: String, default: Boolean): Boolean = {
       var result: Option[Boolean] = None
-      var strVal = pruneComments(props.getProperty(key))
+      var strVal = props.getProperty(key)
       if (strVal != null) {
+        strVal = pruneComments(strVal)
         try {
           result = Some(ParseUtils.parseBoolean(strVal.trim()))
         }
@@ -174,8 +176,9 @@ object Extensions {
     def getEnumProperty[T <: PropValue](key: String, default: T)
                            (implicit `enum`: FiniteEnum.Enum[T]) = {
       var result: Option[T] = None
-      var strVal = pruneComments(props.getProperty(key))
+      var strVal = props.getProperty(key)
       if (strVal != null) {
+        strVal = pruneComments(strVal)
         // preprocess numStr by trimming
         val propVal = strVal.trim()
         val values = `enum`.universe // enumeration values

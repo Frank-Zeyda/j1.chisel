@@ -24,7 +24,7 @@ import chisel3.util._
 // Values for the status output signal.
 object j1Status {
   val RUNNING          = "b000".U(3.W)
-  val ILLEGAL_ACCCES   = "b001".U(3.W) // (UNUSED -> FUTURE)
+  val ILLEGAL_ACCESS   = "b001".U(3.W) // (UNUSED -> FUTURE)
   val DSTACK_UNDERFLOW = "b010".U(3.W)
   val DSTACK_OVERFLOW  = "b011".U(3.W)
   val RSTACK_UNDERFLOW = "b100".U(3.W)

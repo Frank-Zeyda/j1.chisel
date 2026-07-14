@@ -156,7 +156,7 @@ class j1PeekPokeTester(dut: j1System) extends PeekPokeTester(dut)
     /* Correct rsp in case of stack overflow and underflow. */
     val status = peek(dut.probe.status).toInt
     if (status == 0x4) { rsp = 0 }
-    if (status == 0x5) { rsp = dut.j1cpu.dstack.mem.length.toInt }
+    if (status == 0x5) { rsp = dut.j1cpu.rstack.mem.length.toInt }
     /* Print content of return stack in the Forth style. */
     Console.print(f"Return Stack: <${rsp}>")
     for (idx <- 1 to rsp) {
