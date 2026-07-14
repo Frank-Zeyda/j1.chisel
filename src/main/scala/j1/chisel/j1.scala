@@ -126,7 +126,7 @@ class j1(implicit cfg: j1Config) extends Module {
     if (protect) !(prot && io.mem_addr <= protmem.U) else true.B
   }
 
-  /* Helper wire for mutli-step shifter */
+  /* Helper wire for multi-step shifter */
   val multistep = Wire(UInt(4.W))
 
   /* Only allow shifts by 8/4/1 bits, respectively. */
@@ -195,7 +195,7 @@ class j1(implicit cfg: j1Config) extends Module {
   /* Update of TOS register (st0) */
   when (reboot) {
     /* To save logic resources, we can remove this case since
-     * the value of st0 ought be irrelevant when dsp is 0. */
+     * the value of st0 ought to be irrelevant when dsp is 0. */
     st0N := 0.U
   }
   .elsewhen (halt) {
@@ -336,7 +336,7 @@ class j1(implicit cfg: j1Config) extends Module {
   }
 
   /* NOTE: The two when () blocks below can be shortened, but though more
-   * verbose, I prefer the epxplicit style, giving the behaviour for each
+   * verbose, I prefer the explicit style, giving the behaviour for each
    * instruction separately rather than relying on default cases / values. */
 
   /* Assignment of dspI and dstkW */
@@ -351,7 +351,7 @@ class j1(implicit cfg: j1Config) extends Module {
       dstkW := true.B
     }
     .otherwise {
-      /* The following two ought not be needed. Bug in Chisel? */
+      /* The following two ought not to be needed. Bug in Chisel? */
       dspI := 0.S
       dstkW := false.B
       switch (io.insn(14, 13)) {
@@ -393,7 +393,7 @@ class j1(implicit cfg: j1Config) extends Module {
       rstkW := false.B
     }
     .otherwise {
-      /* The following two ought not be needed. Bug in Chisel? */
+      /* The following two ought not to be needed. Bug in Chisel? */
       rspI := 0.S
       rstkW := false.B
       switch (io.insn(14, 13)) {
@@ -424,7 +424,7 @@ class j1(implicit cfg: j1Config) extends Module {
   }
 
   /* The below, I presume, is equivalent. Check with Martin Schoeberl. */
-  /* TODO: So if there is any benefit using this version wrt logic usage. */
+  /* TODO: See if there is any benefit using this version wrt logic usage. */
   /*
   rspI := 0.S
   rstkW := false.B

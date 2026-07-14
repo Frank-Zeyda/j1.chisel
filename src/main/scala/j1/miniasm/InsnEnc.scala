@@ -145,7 +145,7 @@ object ElidedWords {
   object KEEP1_STORE   extends Alu(AluOp.T, AluFunc.NstoreT, 0, 0);
   object KEEP1_IOSTORE extends Alu(AluOp.T, AluFunc.NiostoreT, 0, 0);
 
-  // Instructions that keep two operands on the stack. */
+  // Instructions that keep two operands on the stack.
   object KEEP2_PLUS    extends Alu(AluOp.TplusN, AluFunc.T2N, 1, 0);
   object KEEP2_AND     extends Alu(AluOp.TandN, AluFunc.T2N, 1, 0);
   object KEEP2_OR      extends Alu(AluOp.TorN, AluFunc.T2N, 1, 0);
@@ -165,7 +165,7 @@ object ElidedWords {
 
 /* We use a reflective approach to determine defined Alu insns. */
 object Isa {
-  /* List of all Alu baswords. */
+  /* List of all Alu basewords. */
   lazy val BASEWORDS = reflectAluObjects(Basewords)
 
   /* List of all Alu elided words. */
@@ -177,7 +177,7 @@ object Isa {
   /* Run-time mirror used for reflective instantiation. */
   private val mirror = ru.runtimeMirror(getClass.getClassLoader)
 
-  /* Method to obtain the relective type of an object. */
+  /* Method to obtain the reflective type of an object. */
   private def getInstanceType[T: ru.TypeTag](obj: T) = ru.typeOf[T]
 
   /* We use reflection to iterate through all Alu objects. */

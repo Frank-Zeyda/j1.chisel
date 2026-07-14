@@ -85,7 +85,7 @@ object ParseUtils {
   private val trueRegex  = raw"(?i)(true|yes|y|1)".r
   private val falseRegex = raw"(?i)(false|no|n|0)".r
 
-  /* Parsing a boolean literal supporting various common nomencaltures. */
+  /* Parsing a boolean literal supporting various common nomenclatures. */
   def parseBoolean(boolStr: String): Boolean = {
     // preprocess boolStr by trimming
     val strVal = boolStr.trim()

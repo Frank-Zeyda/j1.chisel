@@ -191,7 +191,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
   // Deploys all compiled segments via the provided MemInterface.
   def deploy(implicit memIf: MemInterface): Unit = {
     autoclose()
-    // TODO: Check that all labels are located before deploymnet.
+    // TODO: Check that all labels are located before deployment.
     // Use the provided memory interface to deploy the program.
     regions.foreach {
       region => {
@@ -464,7 +464,7 @@ class j1Asm(start: Int = 0) extends MemInterface {
     }
   }
 
-  /* Elided words that are not agumented base words. */
+  /* Elided words that are not augmented base words. */
   def rdrop = compile(ElidedWords.RDROP)
   def tuck_store = compile(ElidedWords.TUCK_STORE)
 
@@ -552,7 +552,7 @@ object j1Disasm {
     }
   }
 
-  // Create disassembly output for a given address range. */
+  // Create disassembly output for a given address range.
   def apply(start: Int, end: Int)(implicit memIf: MemInterface): Unit = {
     assert(isValidAddr(start))
     assert(isValidAddr(end))
@@ -566,7 +566,7 @@ object j1Disasm {
     }
   }
 
-  // Create disassembly output for a given memory region. */
+  // Create disassembly output for a given memory region.
   def apply(region: Range)(implicit memIf: MemInterface): Unit = {
     apply(region.start, region.last)
   }

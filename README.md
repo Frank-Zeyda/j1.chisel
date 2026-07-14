@@ -1,24 +1,24 @@
 # Chisel conversion of the J1 CPU for FPGA
 
-This repository contains a conversion of James Bowman's [J1](https://github.com/jamesbowman/j1) [CPU](https://hackaday.com/2010/12/01/j1-a-small-fast-cpu-core-for-fpga/) for FPGA into the [Chisel](https://www.chisel-lang.org/) Scala-based hardware description language. It includes a richer feature set than the original J1 (see section [CPU Configuration](#cpu-configuration) below), albeit aiming to stay close to James Bowman's original easy-to-follow [Verilog design](https://github.com/jamesbowman/j1/blob/master/verilog/j1.v) in the Chisel implementation. An instance of the CPU can be generated that ought be 100% compatible with James Bowman's J1, as it was described in the paper: [J1: a small Forth CPU Core for FPGAs](https://excamera.com/files/j1.pdf).
+This repository contains a conversion of James Bowman's [J1](https://github.com/jamesbowman/j1) [CPU](https://hackaday.com/2010/12/01/j1-a-small-fast-cpu-core-for-fpga/) for FPGA into the [Chisel](https://www.chisel-lang.org/) Scala-based hardware description language. It includes a richer feature set than the original J1 (see section [CPU Configuration](#cpu-configuration) below), albeit aiming to stay close to James Bowman's original easy-to-follow [Verilog design](https://github.com/jamesbowman/j1/blob/master/verilog/j1.v) in the Chisel implementation. An instance of the CPU can be generated that ought to be 100% compatible with James Bowman's J1, as it was described in the paper: [J1: a small Forth CPU Core for FPGAs](https://excamera.com/files/j1.pdf).
 
 ## Rationale for this work
 
-On the one hand, the conversion serves as a teaching vehicle for Product Line Engineering ([PLE](https://productlineengineering.com/resources/what-is-product-line-engineering/)), Design Space Exploration ([DSE](https://en.wikipedia.org/wiki/Design_space_exploration)), and Rigorous Digital Engineering ([RDE](https://galois.com/services/rigorous-digital-engineering/)) in Chisel, exemplifying the advantages of Chisel over plain Verilog / VHDL in this context. On the other, it is an attempt to make the J1 CPU more viable for industrial-scale deployment. A tool-chain for remote compilation and testing is currently under development (see [Future Work Roadmap](#future-work-roadmap) section), as well as a pluggable component framework that facilitates the generation of J1-based SoC, similar to the [Chipyard architecture](https://chipyard.readthedocs.io/en/stable/). This project will soon be accompanied by teaching and training material related to the aforementioned concerns.
+On the one hand, the conversion serves as a teaching vehicle for Product Line Engineering ([PLE](https://productlineengineering.com/resources/what-is-product-line-engineering/)), Design Space Exploration ([DSE](https://en.wikipedia.org/wiki/Design_space_exploration)), and Rigorous Digital Engineering ([RDE](https://www.galois.com/research/rigorous-digital-engineering)) in Chisel, exemplifying the advantages of Chisel over plain Verilog / VHDL in this context. On the other, it is an attempt to make the J1 CPU more viable for industrial-scale deployment. A tool-chain for remote compilation and testing is currently under development (see [Future Work Roadmap](#future-work-roadmap) section), as well as a pluggable component framework that facilitates the generation of J1-based SoC, similar to the [Chipyard architecture](https://chipyard.readthedocs.io/en/stable/). This project will soon be accompanied by teaching and training material related to the aforementioned concerns.
 
 This repository currently includes:
 - The Chisel code for generating configurable J1 CPU instances.
-- A simple reference design, tested on a low-cost Cyclone II FPGA ([EP2C5T144](https://hobbycomponents.com/altera/819-altera-cyclone-ii-es2c5t144-fpga-dev-board)) and using Quartus II [13.1](https://www.intel.com/content/www/us/en/software-kit/666220/intel-quartus-ii-web-edition-design-software-version-13-1-for-linux.html?) for synthesis.
+- A simple reference design, tested on a low-cost Cyclone II FPGA ([EP2C5T144](https://hobbycomponents.com/altera/819-altera-cyclone-ii-es2c5t144-fpga-dev-board)) and using Quartus II [13.1](https://www.intel.com/content/www/us/en/software-kit/666220/intel-quartus-ii-web-edition-design-software-version-13-1-for-linux.html) for synthesis.
 - A J1 mini-assembler and disassembler as a shallowly embedded DSL (E-DSL) into Scala.
 - An extended [PeekPokeTester](https://github.com/ucb-bar/chiseltest/blob/main/src/main/scala/chiseltest/iotesters/PeekPokeTester.scala) based on [chiseltest](https://github.com/ucb-bar/chiseltest) to facilitate stepwise execution of the CPU.
 
-*Please watch this repository, more content, bug fixes and material will likely be added in the next few weeks & months ...*
+*Please watch this repository &mdash; more content, bug fixes and material will likely be added in the next few weeks & months ...*
 
-*TODO: I am currently running Quartus II [13.0sp1](https://www.intel.com/content/www/us/en/software-kit/711790/intel-quartus-ii-web-edition-design-software-version-13-0sp1-for-linux.html). Check that all works with [13.1](https://www.intel.com/content/www/us/en/software-kit/666220/intel-quartus-ii-web-edition-design-software-version-13-1-for-linux.html?), as hinted above.*
+*TODO: I am currently running Quartus II [13.0sp1](https://www.intel.com/content/www/us/en/software-kit/711790/intel-quartus-ii-web-edition-design-software-version-13-0sp1-for-linux.html). Check that all works with [13.1](https://www.intel.com/content/www/us/en/software-kit/666220/intel-quartus-ii-web-edition-design-software-version-13-1-for-linux.html), as hinted above.*
 
 # Prerequisites
 
-The [sbt](https://www.scala-sbt.org/) tool is require to compile the Scala/Chisel sources, generate the hardware design and example program, and perform simulation-based testing.
+The [sbt](https://www.scala-sbt.org/) tool is required to compile the Scala/Chisel sources, generate the hardware design and example program, and perform simulation-based testing.
 - To compile the generator source code, execute `sbt compile`.
 - To generate the complete Verilog design for a smoke test (3-LED chaser light), execute `sbt run`.
 - To execute a simple CPU simulation using [chiseltest](https://github.com/ucb-bar/chiseltest), execute `sbt test`.
@@ -57,17 +57,17 @@ Below is an overview of all files and folders currently located inside the repos
 | &nbsp; ↳ [src/main/scala/j1/miniasm/MemInterface.scala](src/main/scala/j1/miniasm/MemInterface.scala) | Memory interface trait used for program deployment |
 | &nbsp; ↳ [src/main/scala/j1/miniasm/MiniAsm.scala](src/main/scala/j1/miniasm/MiniAsm.scala) | J1 mini-assembler and disassembler components (E-DSL) |
 | &nbsp; ↳ [src/main/scala/j1/miniasm/Validation.scala](src/main/scala/j1/miniasm/Validation.scala) | Utility functions for data validation |
-| ↳ [src/main/scala/j1/utils/...](src/main/scala/j1/utils/) | Extensions classes and generic utility components |
+| ↳ [src/main/scala/j1/utils/...](src/main/scala/j1/utils/) | Extension classes and generic utility components |
 | &nbsp; ↳ [src/main/scala/j1/utils/Exceptions.scala](src/main/scala/j1/utils/Exceptions.scala) | Exceptions used by various components |
 | &nbsp; ↳ [src/main/scala/j1/utils/Extensions.scala](src/main/scala/j1/utils/Extensions.scala) | Various (implicit) Scala extension classes |
 | &nbsp; ↳ [src/main/scala/j1/utils/FiniteEnum.scala](src/main/scala/j1/utils/FiniteEnum.scala) | Finite enumeration type class (trait) |
 | &nbsp; ↳ [src/main/scala/j1/utils/Output.scala](src/main/scala/j1/utils/Output.scala) | Basic utility for producing log output to the Console |
 | &nbsp; ↳ [src/main/scala/j1/utils/Parsing.scala](src/main/scala/j1/utils/Parsing.scala) | Utility functions for parsing numbers and booleans |
 | ↳ [src/test/scala/j1/...](src/test/scala/j1/) | Simple testing framework for simulated CPU execution |
-| &nbsp; ↳ [src/test/scala/j1/j1PeekPokeTester.scala](src/test/scala/j1/j1PeekPokeTester.scala) | [PeekPokerTester](https://github.com/ucb-bar/chiseltest/blob/main/src/main/scala/chiseltest/iotesters/PeekPokeTester.scala) extension tailored for testing J1 designs |
+| &nbsp; ↳ [src/test/scala/j1/j1PeekPokeTester.scala](src/test/scala/j1/j1PeekPokeTester.scala) | [PeekPokeTester](https://github.com/ucb-bar/chiseltest/blob/main/src/main/scala/chiseltest/iotesters/PeekPokeTester.scala) extension tailored for testing J1 designs |
 | &nbsp; ↳ [src/test/scala/j1/j1Test.scala](src/test/scala/j1/j1Test.scala) | Sample test illustrating simulation of the reference design |
 
-(*) This `meminit.hex` file is actually not used by the reference design smoke test (on target) and neither the CPU simulation example.
+(*) This `meminit.hex` file is actually not used by the reference design smoke test (on target) nor by the CPU simulation example.
 
 # CPU Configuration
 
@@ -102,22 +102,22 @@ A few additional notes on each setting follow:
 - `j1.cpu.protmem` determines the lower-memory bound `N` that applies for memory protection (see above).
 - `j1.cpu.shifter` permits different kinds of bit shifters to be deployed. Shifting is typically a resource-expensive operation, so using a less powerful shifter can reduce LE/LUT count considerably. The available options are:
   1. `none`: no bit shifter is to be deployed;
-  2. `minimal`: a minimal shifter that only shifts a single step to the right (left shifts can be efficiently emulated with `DUP PLUS`;
+  2. `minimal`: a minimal shifter that only shifts a single step to the right (left shifts can be efficiently emulated with `DUP PLUS`);
   3. `singlestep`: a single-step shifter that shifts in both directions;
   4. `multistep`: a multi-step shifter that shifts either 1, 4, or 8 bits in both directions;
   5. `fullbarrel`: a full barrel shifter (in both directions).
 - `j1.cpu.stackchecks` enables run-time stack checks for overflow and underflow, of both the data and return stack. If a stack error is detected, the machine goes into a **halting state** and outputs a three-bit error code on the `status` output signal to identify the fault. (See the [Reference Design](#reference-design) section for a detailed account on fault signals.)
 - `j1.cpu.relbranches` enables support for relative branches at a distance of `-2048`..`2047` from the current `PC`. This feature takes up one bit of the default 13 bit address target range of branch instructions. Hence, the range for *absolute* branches shrinks from `0`..`8191` to `0`..`4095` but can be extended again to `0`..`65535` if the `j1.cpu.isa.bank` option is enabled. Relative branches are executed in one cycle.
-- `j1.cpu.isa.bank` provides a `BANK 0..15` instruction that extends the target range of absolute branches to `0`..`65535` (128 KB of effective code memory). Far branches hence take two cycles rather than one. A preceding `BANK` instructions determines the upper 4 bits of the target address. (**NOTE**: The bank register is automatically reset to `0` after one cycle.)
+- `j1.cpu.isa.bank` provides a `BANK 0..15` instruction that extends the target range of absolute branches to `0`..`65535` (128 KB of effective code memory). Far branches hence take two cycles rather than one. A preceding `BANK` instruction determines the upper 4 bits of the target address. (**NOTE**: The bank register is automatically reset to `0` after one cycle.)
 - `j1.cpu.isa.halt` adds a `HALT` instruction to halt execution of the CPU and output `b111` on the status signal. Note that halting can be emulated in software via a `JMP` to the current address. Only a reset revives the CPU after halting.
 - `j1.cpu.isa.swap16` adds a `SWAP16` instruction that swaps the lower two bytes of the TOS and pushes the result on the data stack. Other bits greater than 16 of the TOS value are just copied over.
-- `j1.cpu.isa.swap32` adds a `SWAP32` instruction that swaps the lower two (16 bit) words of the TOS and pushes the result on the data stack. Other bits greater than 32 of the TOS value are just copied over. Note that this option is only available if `j1.cpu.datawidth` is equal than or greater to `32`.
+- `j1.cpu.isa.swap32` adds a `SWAP32` instruction that swaps the lower two (16 bit) words of the TOS and pushes the result on the data stack. Other bits greater than 32 of the TOS value are just copied over. Note that this option is only available if `j1.cpu.datawidth` is equal to or greater than `32`.
 - `j1.memory.size` Size of the combined code/data memory. Note that the J1 CPU can address at most 65536 memory words (128 KB), i.e., if `j1.cpu.isa.bank` and/or `j1.cpu.relbranches` is/are enabled. Otherwise, the maximum addressable memory is 8192 words (16 KB), as per the original J1 design.
 - `j1.memory.bbtdp` uses a Verilog black-box model for the True Dual-Ported RAM of the reference design. This is desired for synthesis since EDA tools seem to have trouble with synthesizing TDP RAM from Chisel's `SyncReadMem` module. For testing and simulation, however, we want to set this to `no` or `false`.
 - `j1.dstack.depth` Depth (in bits) of the data stack. The stack size corresponds to (2^`j1.dstack.depth`) + 1 (since the TOS is kept in a separate register by the CPU core).
 - `j1.rstack.depth` Depth (in bits) of the return stack. The stack size corresponds to 2^`j1.rstack.depth`.
 
-In order to fully appreciate the above options and extensions to the J1 CPU core, the reader is encouraged to study the original J1 [paper](https://excamera.com/files/j1.pdf) and [Verilog design](https://github.com/jamesbowman/j1/blob/master/verilog/xilinx-top.v) of James Bowman. The following configuration ought indeed be fully compatible with the original J1:
+In order to fully appreciate the above options and extensions to the J1 CPU core, the reader is encouraged to study the original J1 [paper](https://excamera.com/files/j1.pdf) and [Verilog design](https://github.com/jamesbowman/j1/blob/master/verilog/xilinx-top.v) of James Bowman. The following configuration ought indeed to be fully compatible with the original J1:
 
 ```
 j1.cpu.datawidth: 32
@@ -164,7 +164,7 @@ For Booleans, the following symbolic values are permissible:
 - `true` or `false`
 - `0` or `1`
 
-Both, upper- and lowercase names are permitted here.
+Both upper- and lowercase names are permitted here.
 
 # Verilog Generation
 
@@ -196,11 +196,11 @@ object j1SystemGen extends App {
 
 Note that for generation, we augment [j1.conf](j1.conf) above to ensure that the `j1.memory.bbtdp` setting is set to `true`.
 
-For compilation and deployment via a given EDA tool, all `*.sv` files output to the local [generated](generated) folder are required, as well as the memory initialization file [meminit.hex](generated/meminit.hex). The latter contains the example program of our 3-LED chaser light smoke test; it is defined in the [ChaserLight3.scala](src/main/scala/j1/examples/ChaserLight3.scala) source.
+For compilation and deployment via a given EDA tool, all `*.sv` files output to the local `generated` folder are required, as well as the memory initialization file `generated/meminit.hex`. The latter contains the example program of our 3-LED chaser light smoke test; it is defined in the [ChaserLight3.scala](src/main/scala/j1/examples/ChaserLight3.scala) source.
 
-The top-level SystemVerilog design is included in [j1System.sv](generated/j1System.sv).
+The top-level SystemVerilog design is included in `generated/j1System.sv`.
 
-**Tip**: For deployment, you may like to write a custom bash script `deploy-rtl.sh` to copy those files over to your EDA tool project. The [build.sbt](build.sbt) configuration already includes a custom `deploy` target that will execute such as script, i.e., via `sbt deploy`.
+**Tip**: For deployment, you may like to write a custom bash script `deploy-rtl.sh` to copy those files over to your EDA tool project. The [build.sbt](build.sbt) configuration already includes a custom `deploy` target that will execute such a script, i.e., via `sbt deploy`.
 
 # Reference Design
 
@@ -253,10 +253,10 @@ endmodule
 ```
 
 For deploying / integrating the SystemVerilog design into a given FPGA SoC ...
-- The `clock` input ought be connected to a 50 MHz clock. The CPU operates/triggers on the rising edge of the clock.
+- The `clock` input ought to be connected to a 50 MHz clock. The CPU operates/triggers on the rising edge of the clock.
 - The `reset` input is high-active, i.e., must be deasserted during execution of the design.
 - The `io_led0`, `io_led1` and `io_led2` LED outputs are all high-active.
-- The various `probe_...` outputs are used by Chisel testing and simulation, and do not need to be connected on the target. (The EDA tool may emit a warning thus that can be ignored.)
+- The various `probe_...` outputs are used by Chisel testing and simulation, and do not need to be connected on the target. (The EDA tool may thus emit a warning that can be ignored.)
 
 The reference design monitors the `status` output of the J1 CPU, and if that output becomes non-zero due to a `HALT` or run-time stack error, overrides the LED I/O mapping and uses the 3 LEDS to emit the CPU status instead. To delineate this situation from normal operation, the LEDS will fast-flash while emitting the CPU status. Below is a summary of possible status outputs:
 
@@ -288,7 +288,7 @@ class j1System(clk_freq: Int = 50000000)(implicit cfg: j1Config) extends Module 
   /* IO Mapping */
   /**************/
 
-  /* Buffer j1cpu comibatorial outputs to delay device writes. */
+  /* Buffer j1cpu combinatorial outputs to delay device writes. */
   val io_addr = RegNext(next = j1cpu.io.mem_addr, init = 0.U)
   val io_dout = RegNext(next = j1cpu.io.dout, init = 0.U)
   val io_wr   = RegNext(next = j1cpu.io.io_wr , init = false.B)
@@ -314,7 +314,7 @@ class j1System(clk_freq: Int = 50000000)(implicit cfg: j1Config) extends Module 
   }
 ```
 
-Note that the local `io_addr`, `io_dout` and `io_wr` registers buffer/delay the respective CPU outputs for one clock cycle. This is a necessary technicality due the J1 CPU generally carrying out memory access in a synchronous manner.
+Note that the local `io_addr`, `io_dout` and `io_wr` registers buffer/delay the respective CPU outputs for one clock cycle. This is a necessary technicality due to the J1 CPU generally carrying out memory access in a synchronous manner.
 
 # Assembler / Disassembler
 
@@ -360,7 +360,7 @@ object ChaserLight3 extends j1Asm {
   /* Wait for precisely 1 ms (at 50 MHz clock, call cycle included) */
   label("wait.1ms")
   push(-1)
-  push(12498)        // 12500 iteration corresponds to 1 ms since
+  push(12498)        // 12500 iterations correspond to 1 ms since
   label("wait.loop") // each loop takes 4 cycles == 80 ns at 50 MHz.
   plus.^
   dup
@@ -387,7 +387,7 @@ If absent, `0x0` is used &mdash; which is where execution starts after a CPU res
 
 ## Machine Instructions
 
-The categories of atomic J1 instructions are IMMEDIATE, BRANCH, and ALU. Note that COMPOUND instructions are *sequences* made of atomic ones, and may take more than one CPU cycle. In the table below, **TOS** and **NOS** refer top-of-stack and next-of-stack, respectively. A flag is typically encoded as `0` (false) or `non-zero` (true). The instruction set is reminiscent of a minimal Forth run-time system upon which a more elaborate Forth environment can be bootstrapped, via a *nucleus* and Forth interpreter (*see the original [J1 tool-chain](https://github.com/jamesbowman/j1/tree/master/toolchain), we shall provide our own integrating tightly with this work in the near future as well ...*).
+The categories of atomic J1 instructions are IMMEDIATE, BRANCH, and ALU. Note that COMPOUND instructions are *sequences* made of atomic ones, and may take more than one CPU cycle. In the table below, **TOS** and **NOS** refer to top-of-stack and next-of-stack, respectively. A flag is typically encoded as `0` (false) or `non-zero` (true). The instruction set is reminiscent of a minimal Forth run-time system upon which a more elaborate Forth environment can be bootstrapped, via a *nucleus* and Forth interpreter (*see the original [J1 tool-chain](https://github.com/jamesbowman/j1/tree/master/toolchain), we shall provide our own integrating tightly with this work in the near future as well ...*).
 
 | Syntax | Type | Value Range | Description | Note |
 | ------ |:----:|:-----------:| ----------- | ---- |
@@ -426,7 +426,7 @@ The categories of atomic J1 instructions are IMMEDIATE, BRANCH, and ALU. Note th
 | `lshift` | ALU | depends on shifter configuration (TOS) | left bitshift of the NOS value by TOS bits | consumes operands from the data stack and pushes back result |
 | `depths` | ALU | &ndash; | pushes the current sizes of the return and data stack as a concatenated bitstring `rsp ## dsp` | data stack grows by one; width of `rsp`/`dsp` depends on stack configuration |
 | `protect` | ALU | &ndash; | enables lower-memory protection after a reset, if configured | no stack changes |
-| `bank(n)` | `0`..`15` | &ndash; | sets value of the bank register (used by far absolute branches up to `0xFFFF`, if configured) | no stack changes |
+| `bank(n)` | ALU | `0`..`15` | sets value of the bank register (used by far absolute branches up to `0xFFFF`, if configured) | no stack changes |
 | `halt` | ALU | &ndash; | halts CPU execution until a reset is carried out | no stack changes |
 
 To gain a deeper understanding of the instruction set of the J1, it is helpful to consult the earlier mentioned paper: [J1: a small Forth CPU Core for FPGAs](https://excamera.com/files/j1.pdf). The Scala data structures for instruction encoding can be found in [InsnEnc.scala](src/main/scala/j1/miniasm/InsnEnc.scala).
@@ -446,7 +446,7 @@ Note that labels can be used *before* they are declared, so that forward branche
 
 When a compilation segment is closed via `done`, a new one is automatically opened at the current compilation address. If nothing else is compiled, that segment will, however, be implicitly discarded.
 
-The assembler carries out a number of sporadic dynamic checks to ensure that compilation segments to not overlap and all used label names have been defined via `label("name")`. *NOTE: A more sophisticated framework to detect compilation errors and raise runtime exceptions is currently under development.*
+The assembler carries out a number of sporadic dynamic checks to ensure that compilation segments do not overlap and all used label names have been defined via `label("name")`. *NOTE: A more sophisticated framework to detect compilation errors and raise runtime exceptions is currently under development.*
 
 ## Augmentation
 
@@ -465,7 +465,7 @@ Rather than defining a separate instruction for each elided word, we allow ALU i
 | `.^^` | keeps both operands on the data stack | applies to binary operations only, e.g., `plus` and `uless` |
 | `.x` | embeds an `exit` into the current instruction | |
 
-Note that augmentations can be combined. E.g., `plus.^^.x` is permissible. Beware that not all all ALU instructions support a particular augmentation. The compiler carries out validity checks, doing its best to spot cases where augmentation cannot be supported due to the nature of the instruction.
+Note that augmentations can be combined. E.g., `plus.^^.x` is permissible. Beware that not all ALU instructions support a particular augmentation. The compiler carries out validity checks, doing its best to spot cases where augmentation cannot be supported due to the nature of the instruction.
 
 To see how augmentation works in action, have a look at the [ChaserLight3](src/main/scala/j1/examples/ChaserLight3.scala) assembler program at the start of this section.
 
@@ -477,9 +477,9 @@ We lastly have a few miscellaneous instructions, for instance, to fill the memor
 | ------ |:----:|:-----------:| ----------- | ---- |
 | `softhalt` | BRANCH | &ndash; | executes a `jmp` to the same address | results in an infinite loop (software halt) |
 | `restart` | BRANCH | &ndash; | soft reset: compiles a branch to address zero: `jmp(0x0000)` | does **not** clear the stacks! |
-| `fill` | DATA | &ndash; | compile one zero memory word | a memory words is 16 bit |
-| `fill(n)` | DATA | &ndash; | compile `n` zero memory words | a memory words is 16 bit |
-| `fill(n,v)` | DATA | `-32768`..`65535` | fill `n` memory words of with data `v` | a memory words is 16 bit |
+| `fill` | DATA | &ndash; | compile one zero memory word | a memory word is 16 bits |
+| `fill(n)` | DATA | &ndash; | compile `n` zero memory words | a memory word is 16 bits |
+| `fill(n,v)` | DATA | `-32768`..`65535` | fill `n` memory words with data `v` | a memory word is 16 bits |
 
 ## Debugging and Deployment
 
@@ -507,7 +507,7 @@ There also exist versions that confine the HEX/BIN output to a particular memory
   def writebin(filename: String, region: Range): Boolean
 ```
 
-Note that the initialization file may be truncated wrt to the full size of the memory. This can result in warnings from the EDA tool that, however, can be safely ignored.
+Note that the initialization file may be truncated wrt the full size of the memory. This can result in warnings from the EDA tool that, however, can be safely ignored.
 
 Lastly, `j1Asm` provides a disassemble function:
 
@@ -540,7 +540,7 @@ object method.
 
 # Testing Framework
 
-To simulate and test the J1 reference design ([System.scala](src/main/scala/j1/chisel/System.scala)), an extended [PeekPokerTester](https://github.com/ucb-bar/chiseltest/blob/main/src/main/scala/chiseltest/iotesters/PeekPokeTester.scala) is provided via the source file [j1PeekPokeTester.scala](src/test/scala/j1/j1PeekPokeTester.scala). It can be incorporated into a [`chiseltest`](https://github.com/ucb-bar/chiseltest) test case as follows:
+To simulate and test the J1 reference design ([System.scala](src/main/scala/j1/chisel/System.scala)), an extended [PeekPokeTester](https://github.com/ucb-bar/chiseltest/blob/main/src/main/scala/chiseltest/iotesters/PeekPokeTester.scala) is provided via the source file [j1PeekPokeTester.scala](src/test/scala/j1/j1PeekPokeTester.scala). It can be incorporated into a [`chiseltest`](https://github.com/ucb-bar/chiseltest) test case as follows:
 
 ```scala
 package j1.chisel.test
@@ -559,7 +559,7 @@ class j1Test extends AnyFlatSpec with ChiselScalatestTester {
   it should "<REQUIREMENT>" in { /* execute sample test case */
     test(new j1System).runPeekPoke(dut => new j1PeekPokeTester(dut) {
       // ...
-    }
+    })
   }
 }
 ```
@@ -602,15 +602,15 @@ We are currently exploring in what other ways `j1PeekPokeTester` could be extend
 
 Much of the Chisel design and J1 assembler E-DSL still needs thorough testing. I.e., while [src/main/scala/j1/chisel/j1.scala](src/main/scala/j1/chisel/j1.scala) is, in essence, feature complete with respect to the described configuration space, various combinations of settings still have to be thoroughly tested to validate, e.g., issues due to cross-feature dependencies. We are in the process of building a [Clafer](https://www.clafer.org/) model for the configuration space, with suitable constraints on instance generation.
 
-The J1 mini-assembler currently needs work in terms of taking into account the CPU configuration ([j1.config](j1.config)) and, correspondingly, adjusting code generation and carrying out relevant validation. The author is not entirely happy with the E-DSL syntax (i.e., need for brackets around arguments) and might explore ways to improve and beautify it, while making it more robust too.
+The J1 mini-assembler currently needs work in terms of taking into account the CPU configuration ([j1.conf](j1.conf)) and, correspondingly, adjusting code generation and carrying out relevant validation. The author is not entirely happy with the E-DSL syntax (i.e., need for brackets around arguments) and might explore ways to improve and beautify it, while making it more robust too.
 
-When experimenting with deployment of the generated SystemVerilog onto an FPGA target (Cyclone II [EP2C5T144](https://hobbycomponents.com/altera/819-altera-cyclone-ii-es2c5t144-fpga-dev-board) board with with Quartus II [13.0sp1](https://www.intel.com/content/www/us/en/software-kit/711790/intel-quartus-ii-web-edition-design-software-version-13-0sp1-for-linux.html)), problems occurred due to TDP BRAM not being inferred and synthesized correctly. There are some discussions of similar issues [HERE](https://github.com/chipsalliance/chisel/issues/1788) and [HERE](https://stackoverflow.com/questions/54789756/vivado-cant-recognize-the-double-port-ram-while-using-syncreadmem). Our solution is to manually adjusts `j1.memory.bbtdp`, setting this option to `true` for SystemVerilog generation (`sbt run`) and `false` for Treadle-based simulation (`sbt test`).
+When experimenting with deployment of the generated SystemVerilog onto an FPGA target (Cyclone II [EP2C5T144](https://hobbycomponents.com/altera/819-altera-cyclone-ii-es2c5t144-fpga-dev-board) board with Quartus II [13.0sp1](https://www.intel.com/content/www/us/en/software-kit/711790/intel-quartus-ii-web-edition-design-software-version-13-0sp1-for-linux.html)), problems occurred due to TDP BRAM not being inferred and synthesized correctly. There are some discussions of similar issues [HERE](https://github.com/chipsalliance/chisel/issues/1788) and [HERE](https://stackoverflow.com/questions/54789756/vivado-cant-recognize-the-double-port-ram-while-using-syncreadmem). Our solution is to manually adjust `j1.memory.bbtdp`, setting this option to `true` for SystemVerilog generation (`sbt run`) and `false` for Treadle-based simulation (`sbt test`).
 
 The J1 mini-assembler is useful and sufficient for writing programs for test cases, but inappropriate for developing realistic applications for the J1. The author already developed a tool-chain (in [Standard ML](https://www.polyml.org/)) for remote J1 Forth development, optimization and testing. This shall be integrated with this project in the near future, to provide a comprehensive development system for the J1.
 
 # Future Work Roadmap
 
-The Chisel conversion is a means to an end to illustrate and teach [RDE](https://galois.com/services/rigorous-digital-engineering/), as it has been advocated by the Formal Methods and MDE/MBSE research communities, and is already practiced on large-scale industrial systems by companies such as [Galois, Inc.](https://galois.com) across many technological domains. We envisage the following items of future work:
+The Chisel conversion is a means to an end to illustrate and teach [RDE](https://www.galois.com/research/rigorous-digital-engineering), as it has been advocated by the Formal Methods and MDE/MBSE research communities, and is already practiced on large-scale industrial systems by companies such as [Galois, Inc.](https://galois.com) across many technological domains. We envisage the following items of future work:
 - Create a formal feature model for the J1 CPU, e.g., in [Clafer](https://www.clafer.org/) or [Lando/Lobot](https://github.com/GaloisInc/BESSPIN-Lando).
 - Include resource requirements, i.e., in terms of LE/LUTs into the feature model and develop automatic scripts to empirically sample resource use by feeding back the synthesis reports of EDA tools.
 - Show how the feature model aids us in design-space exploration and optimization of CPU configurations with respect to a formal set of constraints and requirements.
@@ -619,7 +619,7 @@ The Chisel conversion is a means to an end to illustrate and teach [RDE](https:/
 - Define an abstract execution model of the CPU in a theorem prover such as [Isabelle](https://isabelle.in.tum.de/) or [Coq](https://coq.inria.fr/).
 - Generate verified Scala code from the above formal model and integrate it into the J1 testing framework.
 - Use the verified abstract machine as a (model-based) *test oracle* to validate correctness of the J1 Chisel design under arbitrary configurations.
-- Automatically generate test cases via automated exploration strategies, such [intelligent fuzzing](https://en.wikipedia.org/wiki/Fuzzing).
+- Automatically generate test cases via automated exploration strategies, such as [intelligent fuzzing](https://en.wikipedia.org/wiki/Fuzzing).
 - Examine coverage of the above mentioned testing strategy, both in terms of the configuration space and Chisel/SystemVerilog design (for a given configuration).
 - Provide a pluggable framework for J1-based SoC, similar to the [Chipyard](https://chipyard.readthedocs.io/en/stable/) framework, but more geared towards training and teaching in terms of its complexity and learning curve.
 - Provide a UART module and boot-loader implementation to upload programs without the need to reprogram the FPGA.

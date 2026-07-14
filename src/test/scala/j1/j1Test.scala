@@ -27,11 +27,11 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.io.AnsiColor._
 
 class j1Test extends AnyFlatSpec with ChiselScalatestTester {
-  val MAX_STEPS = 100 // to bail out of simulation when non-termating
+  val MAX_STEPS = 100 // to bail out of simulation when non-terminating
 
   /* Load configuration from j1.conf properties file. */
   Console.println(f"------ ${RED}CONFIG${RESET} ------")
-  /* For testing, ensure that we are not Chisel SyncReadMem. */
+  /* For testing, ensure that we use Chisel SyncReadMem (no BB TDP RAM). */
   implicit val cfg = j1Config.load("j1.conf").without_bb_tdp
   cfg.dump()
 
@@ -43,7 +43,7 @@ class j1Test extends AnyFlatSpec with ChiselScalatestTester {
       /* First of all clear all data in code memory. */
       clearProgMem()
 
-      /* Creatie a j1 machine program for the test. */
+      /* Create a j1 machine program for the test. */
       val program = new j1Asm { /* the program is written in j1Asm's E-DSL */
         push(1)
         push(2)
@@ -52,7 +52,7 @@ class j1Test extends AnyFlatSpec with ChiselScalatestTester {
         push(3)
         label("skip")
         call("subroutine")
-        plus.^      // we can also agument with .^^ or chain as in .^.x
+        plus.^      // we can also augment with .^^ or chain as in .^.x
         softhalt    // tells the simulator that we are done
         label("subroutine")
         push(-1)
@@ -88,7 +88,7 @@ class j1Test extends AnyFlatSpec with ChiselScalatestTester {
       Console.println(f"------- ${RED}DONE${RESET} -------")
       dumpState()
 
-      /* Assert a properties of the the resulting machine state. */
+      /* Assert properties of the resulting machine state. */
       expect(peek(dut.probe.st0) == 0, f"-> ${UNDERLINED}st0 == 0${RESET}")
       expect(peek(dut.probe.dsp) == 2, f"-> ${UNDERLINED}dsp == 2${RESET}")
       expect(peek(dut.probe.rsp) == 0, f"-> ${UNDERLINED}rsp == 0${RESET}")

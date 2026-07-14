@@ -54,7 +54,7 @@ object ChaserLight3 extends j1Asm {
   /* Wait for precisely 1 ms (at 50 MHz clock, call cycle included) */
   label("wait.1ms")
   push(-1)
-  push(12498)        // 12500 iteration corresponds to 1 ms since
+  push(12498)        // 12500 iterations correspond to 1 ms since
   label("wait.loop") // each loop takes 4 cycles == 80 ns at 50 MHz.
   plus.^
   dup
@@ -120,7 +120,7 @@ object AltChaserLight3 extends j1Asm {
   /* Wait for precisely 1 ms (at 50 MHz clock, call cycle included) */
   label("wait.1ms")
   push(-1)
-  push(12498)        // 12500 iteration corresponds to 1 ms since
+  push(12498)        // 12500 iterations correspond to 1 ms since
   label("wait.loop") // each loop takes 4 cycles == 80 ns at 50 MHz.
   plus.^
   dup

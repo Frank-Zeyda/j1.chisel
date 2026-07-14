@@ -25,7 +25,7 @@ class Label(val name: String)(implicit memIf: MemInterface) {
   // Address of this label, or None if the label is yet unlocated.
   private var location: Option[Int] = None
 
-  // Dynamically recordc callers of this label (JMP, JPZ or CALL).
+  // Dynamically records callers of this label (JMP, JPZ or CALL).
   private val callers: Set[Int] = Set() // set of caller addresses
 
   // Returns the address of the label, or None prior to location.

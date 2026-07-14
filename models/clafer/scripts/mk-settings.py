@@ -39,10 +39,10 @@ SETTINGS_DIR = 'settings'
 # Regular expression to detect clafer instance files by their name.
 INSTANCE_FILE = r'j1\.clf\.(?P<number>\d+)\.data'
 
-# Setting the below to True to enables verbose output. (option --verbose)
+# Setting the below to True enables verbose output. (option --verbose)
 VERBOSE_OUTPUT = False
 
-# Setting the below to True to enables debugging output. (option --debug)
+# Setting the below to True enables debugging output. (option --debug)
 DEBUG_OUTPUT = False
 
 # Default properties transferred to the Java settings file.
@@ -106,7 +106,7 @@ def hline(dashes = None):
 def eprint(*args, **kwargs):
   print(*args, file = sys.stderr, **kwargs)
 
-# Emits an error message (msg) and exists the script.
+# Emits an error message (msg) and exits the script.
 def critical(msg):
   eprint(f"{intoRed('error')}: " + msg.strip())
   eprint("-> Aborting script due to error(s)")
@@ -120,7 +120,7 @@ def interp_escapes(text):
 # Parsing of j1.clf.<N>.data files #
 ####################################
 
-# Parses a single line within in a clafer instance specifiction.
+# Parses a single line within a clafer instance specification.
 # Returns tuple of the form (indents, clafer-name, ref-value [may be None])
 def parse_line(text):
   count = 0
@@ -170,7 +170,7 @@ def parse_inst(filename, lines, concrete, abstract = 'j1'):
   return result
 
 # Converts the output of parse_inst(lines) into a settings dictionary.
-# Only keys occuring in DEFAULT_SETTINGS are included into the result.
+# Only keys occurring in DEFAULT_SETTINGS are included into the result.
 def parse_settings(inst):
   path = []
   settings = DEFAULT_SETTINGS.copy()
@@ -275,7 +275,7 @@ def main(args):
   if DEBUG_OUTPUT: hline()
   if VERBOSE_OUTPUT:
     print(f"Processed {total} j1.clf.<N>.data files in total")
-    print(f"-> All generating settings files are in the " +
+    print(f"-> All generated settings files are in the " +
           f"'{intoBold(SETTINGS_DIR)}' folder.")
 
 ###################

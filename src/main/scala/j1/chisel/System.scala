@@ -65,7 +65,7 @@ class j1System(clk_freq: Int = 50000000)(implicit cfg: j1Config)
   memory.io.wrAddrA := DontCare // UNUSED
   memory.io.rdAddrB := j1cpu.io.mem_addr
   memory.io.wrAddrB := j1cpu.io.mem_addr
-  memory.io.wrDataA := DontCare // UNSUED
+  memory.io.wrDataA := DontCare // UNUSED
   memory.io.wrDataB := j1cpu.io.dout
   memory.io.wrEnaA  := false.B
   memory.io.wrEnaB  := j1cpu.io.mem_wr
@@ -113,7 +113,7 @@ class j1System(clk_freq: Int = 50000000)(implicit cfg: j1Config)
   /* IO Mapping */
   /**************/
 
-  /* Buffer j1cpu comibatorial outputs to delay device writes. */
+  /* Buffer j1cpu combinatorial outputs to delay device writes. */
   val io_addr = RegNext(next = j1cpu.io.mem_addr, init = 0.U)
   val io_dout = RegNext(next = j1cpu.io.dout, init = 0.U)
   val io_wr   = RegNext(next = j1cpu.io.io_wr , init = false.B)

@@ -131,7 +131,7 @@ object j1ClaferDSE extends App {
     }
   )
 
-  /* Output an error message if not settings files were detected. */
+  /* Output an error message if no settings files were detected. */
   if (no_settings_files) {
     Output.error(
       s"No settings files found in '${BOLD}${SETTINGS_DIR}${RESET}'.\n" +

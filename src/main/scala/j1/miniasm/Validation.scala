@@ -19,7 +19,7 @@ import InsnMask.{JMP, JPZ, CALL, ALU}
 
 /* TODO: Take variant configuration into account to fine-tune checks:
  * - branches could consider the amount of available memory
- * - there may me some ALU instructions that are ill-formed */
+ * - there may be some ALU instructions that are ill-formed */
 
 object Validation {
   def isValidAddr(addr: Int): Boolean =

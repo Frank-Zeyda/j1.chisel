@@ -115,7 +115,7 @@ case class j1Config(
 }
 
 object j1Config {
-  // Default configuration file to be read by load(). */
+  // Default configuration file to be read by load().
   val DEFAULT_CONFIG_FILE: String = "j1.conf"
 
   /* Create j1 configuration instance programmatically. */

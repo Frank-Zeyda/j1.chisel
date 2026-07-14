@@ -6,14 +6,14 @@
 # Clafer file to be used for instance generation.
 CLAFER_FILE = j1.clf
 
-# Detect version of the install Clafer tool-chain.
+# Detect version of the installed Clafer tool-chain.
 CLAFER_VERSION := $(shell claferIG --version)
 
 # Verify that the Clafer tools 0.4.5 are installed.
 ifneq ($(CLAFER_VERSION),ClaferIG 0.4.5)
 ${error Please install version 0.4.5 of the Clafer tools \
-(from https://gsd.uwaterloo.ca/clafer-tools-binary-distributions) \
-and add in the installation location to PATH}
+(from https://www.clafer.org) \
+and add the installation location to PATH}
 endif
 
 # Include makefile defining ANSI escape sequences.
