@@ -105,17 +105,17 @@ class BBDualPortedRAM(val width: Int, val size: Int) extends BlackBox
     |
     |  // Port A
     |  input  [15:0] rdAddrA,
-    |  output [${width-1}:0] rdDataA,
+    |  output reg [${width-1}:0] rdDataA,
     |  input  [15:0] wrAddrA,
     |  input  [${width-1}:0] wrDataA,
-    |  input         wrEnaA,
+    |  input  wrEnaA,
     |
     |  // Port B
     |  input  [15:0] rdAddrB,
-    |  output [${width-1}:0] rdDataB,
+    |  output reg [${width-1}:0] rdDataB,
     |  input  [15:0] wrAddrB,
     |  input  [${width-1}:0] wrDataB,
-    |  input         wrEnaB
+    |  input  wrEnaB
     |);
     |
     |  reg [15:0] ram[${size-1}:0]; // memory array
@@ -137,7 +137,7 @@ class BBDualPortedRAM(val width: Int, val size: Int) extends BlackBox
     |  begin
     |    if (wrEnaA)
     |    begin
-    |      ram[wrAddrA] = wrDataB;
+    |      ram[wrAddrA] = wrDataA;
     |    end
     |  end
     |
