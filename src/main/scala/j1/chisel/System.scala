@@ -52,10 +52,10 @@ class j1System(clk_freq: Int = 50000000)(implicit cfg: j1Config)
   val j1cpu = Module(new j1)
   val memory: DualPortedRAM = {
     if (use_bb_tdp) {
-      Module(new BBDualPortedRAM(datawidth, memsize))
+      Module(new BBDualPortedRAM(16, memsize))
     }
     else {
-      Module(new ChiselDualPortedRAM(datawidth, memsize))
+      Module(new ChiselDualPortedRAM(16, memsize))
     }
   }
 

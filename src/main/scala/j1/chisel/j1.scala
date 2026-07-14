@@ -70,13 +70,15 @@ class j1(implicit cfg: j1Config) extends Module {
   })
 
   // Submodules
-  val dstack = Module(new Stack(datawidth, dstkDepth))
-  val rstack = Module(new Stack(datawidth, rstkDepth))
+  // NOTE: The return stack must be wide enough to hold addresses.
+  val dstack = Module(new Stack(datawidth,         dstkDepth))
+  val rstack = Module(new Stack(datawidth.min(16), rstkDepth))
 
   // Registers
   val reboot = Regs.Reboot
   val (pc, pcN) = Regs.InitWithWire(0.U(16.W))
   val (st0, st0N) = Regs.InitWithWire(0.U(datawidth.W))
+  // TODO: We only need "+ 1" when doing runtime stack checks!
   val (dsp, dspN) = Regs.InitWithWire(0.U((dstkDepth + 1).W))
   val (rsp, rspN) = Regs.InitWithWire(0.U((rstkDepth + 1).W))
   val (bank, bankN) = Regs.InitWithWire(0.U(4.W))
@@ -90,7 +92,7 @@ class j1(implicit cfg: j1Config) extends Module {
 
   // Return Stack: Aux Wires
   val rspI = Wire(SInt(2.W))
-  val rstkD = Wire(UInt(datawidth.W))
+  val rstkD = Wire(UInt(datawidth.min(16).W))
   val rstkW = Wire(Bool())
   rspN := rsp + rspI.pad(rstkDepth + 1).asUInt
 
@@ -442,7 +444,7 @@ class j1(implicit cfg: j1Config) extends Module {
 
   /* Assignment of rstkD */
   /* NOTE: For Jpz, we have rstkW := false.B, so rstkD is irrelevant. */
-  rstkD := Mux(io.insn(13), st0 /* Jpz or Alu */, pc + 1.U)
+  rstkD := Mux(io.insn(13), st0.pad(16) /* Jpz or Alu */, pc + 1.U)
 
   /* Assignment of pcN */
   when (reboot) {
